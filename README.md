@@ -1,11 +1,10 @@
-
 # Zero2WP v0.1.0
-A build system designed to automate the WordPress development workflow.
+A build system for automating the WordPress development workflow.
 
 http://www.wordpressify.co/ 
 
 ### Introduction
-Zero2WP is a modern workflow for WordPress development that uses PhP's integrated web server and auto-reloads the browser. Several style pre-processors are included plus Zero2WP is ES6-ready.
+Zero2WP is a modern workflow for WordPress development that uses Nodejs, Gulp, BrowserSync, and PhP's integrated web server to track changes and auto-reload one or more browsers. Several style pre-processors are built in, plus Zero2WP is ES6-ready.
 
 ## Features
 
@@ -22,16 +21,12 @@ Easy import external JavaScript libraries and npm scripts.
 - **CUSTOMIZABLE**
 Flexible build customization, managed by Gulp tasks.
 
-# 1. Node Installion
-
-Zero2WP requires Node v7.5+. This is the only global dependency. You can download Node **[here](https://nodejs.org/)**.
-
-# 2. Project Setup
+# 1. Project Setup
 To install Zero2WP, open a terminal, go the folder for your project, and clone the repo from GitHub:
 ```
 git clone https://github.com/arnoldNuvisto/Zero2WP
 ```
-- This will install the Zero2WP repo to the project directory on your local machine. Now open the newly created Zero2WP folder and install the dependencies:
+- This will install the Zero2WP repo to the project directory on your local machine. In the terminal window, open the newly created Zero2WP folder and install the dependencies as follows:
 
 **INSTALL DEPENDENCIES**
 
@@ -41,16 +36,16 @@ npm install
 
 **CHANGE TEMPLATE NAME**
 
-- At this point Zero2WP is installed and ready to be used for the first time. Before starting open **gulpfile.js** and edit the project variables:
+- Zero2WP is now installed and we're almost ready. Open the **gulpfile.js** file and edit the default project variables as needed:
 
 ```javascript
 /* -------------------------------------------------------------------------------------------------
 Theme Name
  ------------------------------------------------------------------------------------------------- */
-var themeName = 'wordpressify';
+var themeName = 'yourThemeName';
 //--------------------------------------------------------------------------------------------------
 ```
-
+# 2. Launching the Workflow
 **INSTALL WORDPRESS**
 
 - First, install WordPress to your project with the following command:
@@ -59,7 +54,7 @@ var themeName = 'wordpressify';
 npm run install:wordpress
 ```
 
-- This will download the latest version of WordPress to the 'build/dev' folder.
+- This script will download the latest version of WordPress to the 'build/dev' folder.
 
 **START WORKFLOW**
 
@@ -68,39 +63,38 @@ npm run install:wordpress
 ```
 npm run dev
 ```
+- This script will copy over the core files for your new theme into the 'build/dev/wordpress/wp-content/themes' directory
+- NOTE: If you are running a fresh installation, you'll need to launch the WordPress wizard in your bowser in order to specify such things as the site name, description, database and login details, etc.
+- You're good to go!
 
-- If you are running a fresh installation, you will have to setup the general informations for the WordPress wizard (site name, description, database etc).
-- You are ready to go! Happy coding!
-
-**WORDPRESS PLUGINS**
-
-- If you want to build WordPress plugins, you can do that from the directory:
-
-```
-src/plugins
-```
-
+# 3. Migrating to Production
 **PRODUCTION TEMPLATE**
 
-- To generate your distribution files run the command:
+-  Run the command to generate production-ready distribution files for your theme:
 
 ```
 npm run prod
 ```
 
-- The template will be saved as a zip file in:
+- The theme will be saved as a zip file in:
 
 ```
-dist/wordpressify.zip
+dist/Zero2WP.zip
 ```
+
+- Your production-ready theme will be saved as a zip file in:
 
 **WINDOWS USERS**
 
-- If you are running Windows, PHP has to be installed and configured. Check the [gulp-connect-php](https://www.npmjs.com/package/gulp-connect-php) documentation.
+- If you are running on a Windows machine, note that PHP must be installed and properly configured. Check the documentation at [gulp-connect-php](https://www.npmjs.com/package/gulp-connect-php).
 
 # 3. Styles, PostCSS and Scss
+
 ## PostCSS
-By default we support [PostCSS](http://postcss.org/), it is a similar preprocessor like Sass, Less or other preprocessors but it can do much more. On top of that is 3x faster than Sass or 4x faster than Less. These features come in the shape of PostCSS plugins. Think of these like using lego, where each piece is a different feature that can transform your CSS in some way. PostCSS lets you stick together these pieces so that you can build up your own feature set, adding and removing plugins as and when you need them. [CSSNext](http://cssnext.io/) is installed by default. Read more about PostCSS [here](https://ashleynolan.co.uk/blog/postcss-a-review).
+
+By default Zero2WP supports [PostCSS](http://postcss.org/). PostCSS comprises numerous plugins that allow for extensive customization. [CSSNext](http://cssnext.io/) is installed by default. Read more about PostCSS [here](https://ashleynolan.co.uk/blog/postcss-a-review).
+
+As you can notice from the code below we have 2 different sets of plugins. One for the development environment (pluginsDev) and one for the production task (pluginsProd).
 
 **POSTCSS PLUGINS**
 
@@ -128,38 +122,28 @@ var pluginsProd = [
 //--------------------------------------------------------------------------------------------------
 ```
 
-As you can notice from the code below we have 2 different sets of plugins. One for the development environment (pluginsDev) and one for the production task (pluginsProd).
-
 **WRITING STYLES**
 
-The starting point for styles is the file:
+Styles are written to:
 
 ```
-src/styles/styles.css
+components/assets/css/main.css
 ```
 
-The template definitions are located here too. It is also where all other imports are included in the stylesheets.
+The template definition is in: 
 
 ```
-/*
-Theme Name: WordPressify
-Theme URI: https://www.wordpressify.co
-Author: Luan Gjokaj
-Author URI: https://www.riangle.com
-Description: WordPressify official theme.
-Version: 1.0
-Tags: responsive, clean, minimal, modern, documentation
-*/
+scr/style.css
 ```
 
 ## SASS
-WordPressify is super flexible. You can install Sass and use it as a main style preprocessor. First you need to install it:
+You can install Sass and use it as a main style preprocessor:
 
 ```
 npm install gulp-sass --save-dev
 ````
 
-Then you need to include sass in the gulpfile.js
+Now include sass in the gulpfile.js
 
 ```javascript
 var sass = require('gulp-sass');
@@ -190,7 +174,7 @@ gulp.task('style-prod', function () {
 });
 ```
 
-Also the watch task has to be changed in order to watch for .scss filetypes:
+The watch task also has to be changed to watch for .scss filetypes:
 
 ```javascript
 gulp.task('watch', function () {
@@ -203,40 +187,26 @@ gulp.task('watch', function () {
 
 # 4. Fonts and Images
 ## Images
-You template image assets are recommended to be stored in your theme directory:
+
+Template image assets are recommended to be stored in:
 
 ```
 src/theme/img/
 ```
 
-Ideally all the heavy bitmaps should be managed through the [Media Library](https://codex.wordpress.org/Media_Library_Screen) of WordPress. So in your theme directory keep always svg or minimal assets to keep the template as light as possible.
+Ideally all user-managed media files should be managed through the [Media Library](https://codex.wordpress.org/Media_Library_Screen) of WordPress. In short, keep only theme/template specific media assets in this folder.
 
 ## Fonts
-Fonts are always special. Your fonts should be places in:
+
+Project-specific font files can be included in:
 
 ```
 src/fonts/
 ```
 
-Then you can include them in your **CSS**:
-
-```
-@font-face {
-	font-family: 'Helvetica Neue Thin';
-	src: url('fonts/Helvetica-Neue-Thin.eot?#iefix');
-	src: url('fonts/Helvetica-Neue-Thin.eot?#iefix') format('eot'),
-	url('fonts/Helvetica-Neue-Thin.woff2') format('woff2'),
-	url('fonts/Helvetica-Neue-Thin.woff') format('woff'),
-	url('fonts/Helvetica-Neue-Thin.ttf') format('truetype'),
-	url('fonts/Helvetica-Neue-Thin.svg#e3b7d1e7c160') format('svg');
-}
-```
-
 # 5. JavaScript ES6
 
-WordPressify supports ES6 JavaScript with [Babel](https://babeljs.io/). Babel has support for the latest version of JavaScript through syntax transformers. These plugins allow you to use new syntax, right now without waiting for browser support.
-
-## Write ES6 JavaScript
+Zero2WP handles ES6 JavaScript using [Babel](https://babeljs.io/). Babel provides support for the latest version of JavaScript so you can use the new ES6 syntax immediately.
 Your JavaScript code should be located in:
 
 ```
@@ -278,7 +248,7 @@ A build restart is required for changes to take effect.
 
 # 7. Build Backups
 
-While coding you will find yourself uploading dummy content in the WordPress build server. These might be images or other media stored in **wp-content**. WordPressify allows you to backup the current state of the build which will include all server files. To backup your build run the command:
+Zero2WP lets you backup the current state of the build with the following command:
 
 ```
 $ npm run backup
@@ -290,69 +260,11 @@ Files will be compressed in a ZIP and stored in the directory:
 backups/
 ```
 
-# 8. Code Styles
-
-WordPressify comes with its own set of code style rules that can be imported into IntelliJ. The codestyle file can be found in the directory:
-
-```
-tools/IntelliJ.xml
-```
-
-## Lint CSS
-
-Before pushing changes make sure you have clean and consistent styles, run [Stylelint](https://stylelint.io/) with the command:
-```
-$ npm run lint:css
-```
-
-# 9. Database
+# 8. Database
 ## MySQL Server
-After installing WordPressify you will still need a database to connect with. The recommended solution is to install [MySQL](https://dev.mysql.com/downloads/mysql/) on your local machine and follow the [installation instructions](https://dev.mysql.com/doc/refman/5.7/en/installing.html).
-
-## Remote Database
-You are free to use remote databases, please note that this will affect the speed depending on the connection.
-
-
+You will still need a database to connect with your installation. The recommended solution is to install [MySQL](https://dev.mysql.com/downloads/mysql/) on your local machine and follow the [installation instructions](https://dev.mysql.com/doc/refman/5.7/en/installing.html).
 
 # Changelog
-
-**v0.1.1**
-- Added support for `src/plugins`
-
-**v0.1.0**
-- Code readability.
-- Removed unused packages.
-- Build success & error messages.
-- Tasks cleanup.
-
-**v0.0.9**
-- Update documentation.
-
-**v0.0.8**
-- Name change.
-
-**v0.0.7**
-- Fix placemente of `DISABLE_WP_CRON`.
-
-**v0.0.6**
-- Theme clenup.
-- Consistent code styles.
-
-**v0.0.5**
-- Activated `DISABLE_WP_CRON` to prevent Node freezing.
-- Backup your build files with all `wp-content` uploads.
-
-**v0.0.4**
-- Whitelabel template.
-- Renamed classes.
-- Refactored css structure.
-- Meet WordPressify.
-
-
-**v.0.0.3**
-- Simplified build logic.
-- Install WordPress only once with `npm run install:wordpress`
-- Cleaner distribution task.
 
 **v0.0.1**
 - Initial commit
