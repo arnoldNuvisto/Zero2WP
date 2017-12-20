@@ -6,3 +6,4 @@ build/**/fonts
 build/**/img
 components/**/fonts
 components/**/img
+package-lock.json
