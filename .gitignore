@@ -1,0 +1,8 @@
+.DS_Store
+node_modules
+.tmp
+.sass-cache
+build/**/fonts
+build/**/img
+components/**/fonts
+components/**/img

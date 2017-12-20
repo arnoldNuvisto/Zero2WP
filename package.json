@@ -1,0 +1,15 @@
+{
+  "name": "workflow",
+  "version": "0.1.0",
+  "description": "\"A project to create a Wordpress theme development workflow\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "?.git"
+  },
+  "author": "Arnold Wytenburg",
+  "license": "MIT"
+}
