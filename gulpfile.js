@@ -229,7 +229,7 @@ var buildNotFound = errorMsg + ' ⚠️　- You need to install WordPress first.
 var filesGenerated = 'Your ZIP template file was generated in: \x1b[1m' + __dirname + '/dist/' + themeName + '.zip\x1b[0m - ✅';
 var pluginsGenerated = 'Plugins are generated in: \x1b[1m' + __dirname + '/dist/plugins/\x1b[0m - ✅';
 var backupsGenerated = 'Your backup was generated in: \x1b[1m' + __dirname + '/backups/' + date + '.zip\x1b[0m - ✅';
-var wpFy = '\x1b[42m\x1b[1mWordPressify\x1b[0m';
-var wpFyUrl = '\x1b[2m - http://www.wordpressify.co/\x1b[0m';
+var wpFy = '\x1b[1mZero2WP\x1b[0m';
+var wpFyUrl = '\x1b[2m - https://github.com/arnoldNuvisto/Zero2WP\x1b[0m';
 var thankYou = 'Thank you for using ' + wpFy + wpFyUrl;
 
