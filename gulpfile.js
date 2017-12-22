@@ -18,8 +18,8 @@ Project Variables
 // START EDITING HERE
 
 // Project related.
-var devDir 					= './build/dev/';
-var distDir					= './build/dist/';
+var devDir 					= './build/';
+var distDir					= './dist/';
 var themeName 				= 'nuvisto';
 var themeDir 				= 'wordpress/wp-content/themes/';
 var pluginsDir 				= 'wordpress/wp-content/plugins/';
@@ -29,9 +29,9 @@ var text_domain             = 'WPGULP'; // Your textdomain here.
 var translationFile         = 'WPGULP.pot'; // Name of the transalation file.
 var translationDestination  = './languages'; // Where to save the translation files.
 var packageName             = 'WPGULP'; // Package name.
-var bugReport               = 'https://AhmadAwais.com/contact/'; // Where can users report bugs.
-var lastTranslator          = 'Ahmad Awais <your_email@email.com>'; // Last translator Email ID.
-var team                    = 'WPTie <your_email@email.com>'; // Team's Email ID.
+var bugReport               = 'https://arnoldwytenburg.com/'; // Where can users report bugs.
+var lastTranslator          = 'Arnold Wytenburg <arnold@arnoldwytenburg.com>'; // Last translator Email ID.
+var team                    = 'Arnold Wytenburg <arnold@arnoldwytenburg.com>'; // Team's Email ID.
 
 // Style related.
 var styleSRC                = './assets/css/style.scss'; // Path to main .scss file.
@@ -88,13 +88,11 @@ var fs 				= require('fs');
 var inject 			= require('gulp-inject-string');
 var remoteSrc 		= require('gulp-remote-src');
 var unzip 			= require('gulp-unzip');
-
+//--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Installation Tasks
 > npm run install:wordpress
 -------------------------------------------------------------------------------------------------- */
-gulp.task('default');
-
 /**
  * Task: 'cleanup'.
  *
@@ -205,7 +203,15 @@ gulp.task('disable-cron', function () {
 	});
 });
 //--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Build Tasks
+> gulp
+-------------------------------------------------------------------------------------------------- */
+gulp.task('default');
 
+/*
+what now?
+*/
 
 
 //--------------------------------------------------------------------------------------------------
