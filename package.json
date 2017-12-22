@@ -1,9 +1,11 @@
 {
-  "name": "workflow",
-  "version": "0.1.0",
+  "name": "Zero2WP",
+  "version": "0.0.1",
   "description": "\"A project to create a Wordpress theme development workflow\"",
   "main": "index.js",
   "scripts": {
+    "cleanup": "gulp cleanup",
+    "install:wordpress": "gulp cleanup && gulp download-wordpress && gulp setup-wordpress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -13,7 +15,12 @@
   "author": "Arnold Wytenburg",
   "license": "MIT",
   "devDependencies": {
+    "del": "^3.0.0",
+    "fs": "0.0.1-security",
     "gulp": "^3.9.1",
+    "gulp-inject-string": "^1.1.0",
+    "gulp-remote-src": "^0.4.3",
+    "gulp-unzip": "^0.2.0",
     "gulp-util": "^3.0.8"
   }
 }

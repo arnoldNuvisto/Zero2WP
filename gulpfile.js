@@ -4,32 +4,25 @@
  *
  * Zero2WP
  *
- * Implements:
- *      1. Live reloads browser with BrowserSync.
- *      2. CSS: Sass to CSS conversion, error catching, Autoprefixing, Sourcemaps,
- *         CSS minification, and Merge Media Queries.
- *      3. JS: Concatenates & uglifies Vendor and Custom JS files.
- *      4. Images: Minifies PNG, JPEG, GIF and SVG images.
- *      5. Watches files for changes in CSS or JS.
- *      6. Watches files for changes in PHP.
- *      7. Corrects the line endings.
- *      8. InjectCSS instead of browser page reload.
- *      9. Generates .pot file for i18n and l10n.
- *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.1
+ * @version 0.0.2
  */
 /**
  * Configuration... Edit these variables to set up your project.
  *
  * @NOTE: You can specify <<glob or array of globs>> n paths. 
  */
+/* -------------------------------------------------------------------------------------------------
+Project Variables
+-------------------------------------------------------------------------------------------------- */
+// START EDITING HERE
 
-// START Editing Project Variables.
 // Project related.
-var project                 = 'WPGulpTheme'; // Project Name.
-var projectURL              = 'wpgulp.dev'; // Local project URL of your already running WordPress site. Could be something like local.dev or localhost:8888.
-var productURL              = './'; // Theme/Plugin URL. Leave it like it is, since our gulpfile.js lives in the root folder.
+var devDir 					= './build/dev/';
+var distDir					= './build/dist/';
+var themeName 				= 'nuvisto';
+var themeDir 				= 'wordpress/wp-content/themes/';
+var pluginsDir 				= 'wordpress/wp-content/plugins/';
 
 // Translation related.
 var text_domain             = 'WPGULP'; // Your textdomain here.
@@ -83,16 +76,160 @@ const AUTOPREFIXER_BROWSERS = [
     'bb >= 10'
   ];
 
-// STOP Editing Project Variables.
+// STOP EDITING HERE
+//--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Load Plugins
+-------------------------------------------------------------------------------------------------- */
+var gulp 			= require('gulp');
+var gutil 			= require('gulp-util');
+var del 			= require('del');
+var fs 				= require('fs');
+var inject 			= require('gulp-inject-string');
+var remoteSrc 		= require('gulp-remote-src');
+var unzip 			= require('gulp-unzip');
+
+/* -------------------------------------------------------------------------------------------------
+Installation Tasks
+> npm run install:wordpress
+-------------------------------------------------------------------------------------------------- */
+gulp.task('default');
 
 /**
- * Load Plugins.
+ * Task: 'cleanup'.
  *
- * Load gulp plugins and assign semantic names.
+ * Removes any previous 'dev' and 'dist' directories:
+ *
+ *	1. Gets rid of a pre-exisiting 'dev' folder, if present
+ *	2. Gets rid of a pre-exisiting 'dist' folder, if present
+ *
  */
-var gulp = require('gulp');
-var gutil = require('gulp-util');
-
-gulp.task('log', function() {
-	gutil.log('Zero2WP Is Awesome');
+gulp.task('cleanup', function () {
+	del([devDir + '**']);
+	del([distDir + '**']);
 });
+
+/**
+ * Task: 'download-wordpress'.
+ *
+ * Retrieves the most recent version of Wordpress:
+ *
+ *	1. Gets a zip file containing the most recent version of Wordpress from wordpress.org
+ *	2. Places the file into the 'dev' folder for installation
+ *
+ */
+gulp.task('download-wordpress', function () {
+	remoteSrc(['latest.zip'], {
+		base: 'https://wordpress.org/'
+	})
+		.pipe(gulp.dest(devDir));
+});
+
+/**
+ * Task: 'setup-wordpress'.
+ *
+ * Installs Wordpress to the 'dev' folder:
+ *
+ *	1. Runs a task to unzip the downloaded file
+ *	2. Runs a task to copy over a default 'wp-config.php' file, if one exists
+ *
+ */
+gulp.task('setup-wordpress', [
+	'unzip-wordpress',
+	'copy-config'
+]);
+
+/**
+ * Task: 'unzip-wordpress'.
+ *
+ * Unzips the Wordpress zip file into the 'dev' folder:
+ *
+ *	1. Unzip the downloaded file
+ *	2. Place the unzipped Wordpress files into the 'dev' folder
+ *
+ */
+gulp.task('unzip-wordpress', function () {
+	gulp.src(devDir + 'latest.zip')
+		.pipe(unzip())
+		.pipe(gulp.dest(devDir));
+});
+
+/**
+ * Task: 'copy-config'.
+ *
+ * Copies a default 'wp-config.php' file into the 'dev' folder:
+ *
+ *	1. If a file exists:
+ 		1.1 Update the file to disable 'cron'
+ *		1.2 Place the file into the 'dev' folder
+ *	3. Notify the user that the install is completed
+ *
+ * NOTE: including the 'wp-config.php' file is optional - which is why there is an 
+ * 'on('end, ... )' instruction included here: without this instruction, the script would bork if 
+ * it doesn't find a file; including the stmt forces closure.
+ *
+ */
+gulp.task('copy-config', function () {
+	gulp.src('wp-config.php')
+		.pipe(inject.after('define(\'DB_COLLATE\', \'\');', '\ndefine(\'DISABLE_WP_CRON\', true);'))
+		.pipe(gulp.dest(devDir + 'wordpress'))
+		.on('end', function () {
+				gutil.beep();
+				gutil.log(devServerReady);
+				gutil.log(thankYou);
+			});
+});
+
+/**
+ * Task: 'disable-cron'.
+ *
+ * Ensures that 'cron' is disabled in the 'wp-config.php' file:
+ *
+ *	1. Check the 'wp-config.php' file
+ *	2. Disable 'cron' if not already disabled
+ *
+ */
+gulp.task('disable-cron', function () {
+	fs.readFile(devDir + 'wordpress/wp-config.php', function (err, data) {
+		if (err) {
+			gutil.log(wpFy + ' - ' + errorMsg + ' Something went wrong, WP_CRON was not disabled!');
+			process.exit(1);
+		}
+		if (data.indexOf('DISABLE_WP_CRON') >= 0){
+			gutil.log('WP_CRON is already disabled!');
+		} else {
+			gulp.src(buildDir + 'wordpress/wp-config.php')
+			.pipe(inject.after('define(\'DB_COLLATE\', \'\');', '\ndefine(\'DISABLE_WP_CRON\', true);'))
+			.pipe(gulp.dest(devDir + 'wordpress'));
+		}
+	});
+});
+//--------------------------------------------------------------------------------------------------
+
+
+
+//--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Utility Tasks
+-------------------------------------------------------------------------------------------------- */
+var onError = function (err) {
+	gutil.beep();
+	gutil.log(wpFy + ' - ' + errorMsg + ' ' + err.toString());
+	this.emit('end');
+};
+
+//--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Utility Variables
+-------------------------------------------------------------------------------------------------- */
+var date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
+var errorMsg = '\x1b[41mError\x1b[0m';
+var devServerReady = 'Your development server is ready, start the workflow with the command: $ \x1b[1mnpm run dev\x1b[0m';
+var buildNotFound = errorMsg + ' ⚠️　- You need to install WordPress first. Run the command: $ \x1b[1mnpm run install:wordpress\x1b[0m';
+var filesGenerated = 'Your ZIP template file was generated in: \x1b[1m' + __dirname + '/dist/' + themeName + '.zip\x1b[0m - ✅';
+var pluginsGenerated = 'Plugins are generated in: \x1b[1m' + __dirname + '/dist/plugins/\x1b[0m - ✅';
+var backupsGenerated = 'Your backup was generated in: \x1b[1m' + __dirname + '/backups/' + date + '.zip\x1b[0m - ✅';
+var wpFy = '\x1b[42m\x1b[1mWordPressify\x1b[0m';
+var wpFyUrl = '\x1b[2m - http://www.wordpressify.co/\x1b[0m';
+var thankYou = 'Thank you for using ' + wpFy + wpFyUrl;
+
