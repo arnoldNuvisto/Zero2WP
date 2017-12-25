@@ -18,11 +18,33 @@ Project Variables
 // START EDITING HERE
 
 // Project related.
+var projectName             = 'Zero2WP';
+var projectURL              = '/' + projectName + '/build/wordpress/';
+var proxyAddress			= '127.0.0.1' + projectURL;
+
 var devDir 					= './build/';
 var distDir					= './dist/';
+var componentsDir			= './components/';
+var assetsDir 				= {
+	css 	: componentsDir + 'assets/css/',
+	fonts 	: componentsDir + 'assets/fonts/',
+	img 	: componentsDir + 'assets/img/',
+	js 		: componentsDir + 'assets/js/'
+};
+
+var themesDir 				= 'wordpress/wp-content/themes/';
 var themeName 				= 'nuvisto';
-var themeDir 				= 'wordpress/wp-content/themes/';
+var themeDir 				= themesDir + themeName;
 var pluginsDir 				= 'wordpress/wp-content/plugins/';
+
+// Images related.
+//const images = { // ES6 syntax
+var images 					= {
+  src 	: assetsDir.img + 'raw/**/*.{png,jpg,gif,svg}',
+  dest  : assetsDir.img
+};
+//var imagesSRC               = './assets/img/raw/**/*.{png,jpg,gif,svg}'; // Source folder of images which should be optimized.
+//var imagesDestination       = './assets/img/'; // Destination folder of optimized images. Must be different from the imagesSRC folder.
 
 // Translation related.
 var text_domain             = 'WPGULP'; // Your textdomain here.
@@ -49,10 +71,6 @@ var jsCustomSRC             = './assets/js/custom/*.js'; // Path to JS custom sc
 var jsCustomDestination     = './assets/js/'; // Path to place the compiled JS custom scripts file.
 var jsCustomFile            = 'custom'; // Compiled JS custom file name.
 // Default set to custom i.e. custom.js.
-
-// Images related.
-var imagesSRC               = './assets/img/raw/**/*.{png,jpg,gif,svg}'; // Source folder of images which should be optimized.
-var imagesDestination       = './assets/img/'; // Destination folder of optimized images. Must be different from the imagesSRC folder.
 
 // Watch files paths.
 var styleWatchFiles         = './assets/css/**/*.scss'; // Path to all *.scss files inside css folder and inside them.
@@ -81,22 +99,38 @@ const AUTOPREFIXER_BROWSERS = [
 /* -------------------------------------------------------------------------------------------------
 Load Plugins
 -------------------------------------------------------------------------------------------------- */
+var browserSync  	= require('browser-sync');
 var gulp 			= require('gulp');
 var gutil 			= require('gulp-util');
 var del 			= require('del');
 var fs 				= require('fs');
+var imagemin      	= require('gulp-imagemin');
 var inject 			= require('gulp-inject-string');
+var newer    		= require('gulp-newer');
+var plumber 		= require('gulp-plumber');
 var remoteSrc 		= require('gulp-remote-src');
 var unzip 			= require('gulp-unzip');
+
+var reload       = browserSync.reload; // For manual browser reload.
+
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
-Installation Tasks
-> npm run install:wordpress
--------------------------------------------------------------------------------------------------- */
-/**
- * Task: 'cleanup'.
+ * Installation Tasks
+ * 
+ * run "npm run install:wordpress"
  *
- * Removes any previous 'dev' and 'dist' directories:
+ * Installs a fresh copy of wordpress into the project's dev directory:
+ *
+ *	1. 'cleanup': Removes any previous 'dev' and 'dist' directories
+ *	2. 'download-wordpress': Retrieves the most recent version of Wordpress
+ *	3. 'setup-wordpress': Installs Wordpress into the project folder
+ *		3.1 'unzip-wordpress': Unzips the Wordpress zip file into the 'dev' folder
+ *		3.2 'copy-config': Copies an optional default 'wp-config.php' file into the 'dev' folder
+ *	4. 'disable-cron': Ensures that 'cron' is disabled in the 'wp-config.php' file
+ *
+ */
+/**
+ * Task: 'cleanup'
  *
  *	1. Gets rid of a pre-exisiting 'dev' folder, if present
  *	2. Gets rid of a pre-exisiting 'dist' folder, if present
@@ -108,9 +142,7 @@ gulp.task('cleanup', function () {
 });
 
 /**
- * Task: 'download-wordpress'.
- *
- * Retrieves the most recent version of Wordpress:
+ * Task: 'download-wordpress'
  *
  *	1. Gets a zip file containing the most recent version of Wordpress from wordpress.org
  *	2. Places the file into the 'dev' folder for installation
@@ -124,9 +156,7 @@ gulp.task('download-wordpress', function () {
 });
 
 /**
- * Task: 'setup-wordpress'.
- *
- * Installs Wordpress to the 'dev' folder:
+ * Task: 'setup-wordpress'
  *
  *	1. Runs a task to unzip the downloaded file
  *	2. Runs a task to copy over a default 'wp-config.php' file, if one exists
@@ -139,8 +169,6 @@ gulp.task('setup-wordpress', [
 
 /**
  * Task: 'unzip-wordpress'.
- *
- * Unzips the Wordpress zip file into the 'dev' folder:
  *
  *	1. Unzip the downloaded file
  *	2. Place the unzipped Wordpress files into the 'dev' folder
@@ -155,9 +183,7 @@ gulp.task('unzip-wordpress', function () {
 /**
  * Task: 'copy-config'.
  *
- * Copies a default 'wp-config.php' file into the 'dev' folder:
- *
- *	1. If a file exists:
+ *	1. If a default config file exists:
  		1.1 Update the file to disable 'cron'
  *		1.2 Place the file into the 'dev' folder
  *	3. Notify the user that the install is completed
@@ -181,8 +207,6 @@ gulp.task('copy-config', function () {
 /**
  * Task: 'disable-cron'.
  *
- * Ensures that 'cron' is disabled in the 'wp-config.php' file:
- *
  *	1. Check the 'wp-config.php' file
  *	2. Disable 'cron' if not already disabled
  *
@@ -204,15 +228,207 @@ gulp.task('disable-cron', function () {
 });
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
-Build Tasks
-> gulp
--------------------------------------------------------------------------------------------------- */
-gulp.task('default');
+ * Build Tasks
+ * 
+ * run "gulp"
+ *
+ * Updates the current project's theme files in the dev directory:
+ *
+ *	1. 
+ *
+ */
+/**
+ * Task: 'default'
+ *
+ *	1. Runs all of the specified 'build tasks', in order
+ *
+ */
+ //gulp.task('default', ['buildTasks']);
+gulp.task('default', ['browser-sync']);
 
+var buildTasks = [
+	'copy-assets',
+	'copy-includes',
+	'copy-languages',
+	'copy-plugins',
+	'copy-src',
+	'watch'
+];
+
+/**
+ * Task: 'copy-assets'
+ *
+ *	1. Runs all of the 'build tasks' related to processing and copying the 
+ *	the project's asset files to the 'dev' directiory, in order
+ *
+ */
+gulp.task('copy-assets', ['copy-css','copy-fonts','compress-images','copy-images','copy-js']);
+
+/**
+ * Task: 'copy-css'
+ *
+ *	1. Pre-process the project's CSS, PostCSS, SASS, and/or LESS files as needed
+ *	2. Copy the project's compiled CSS files to the 'dev' directory
+ *
+ */
+gulp.task('copy-css', function(){
+
+});
+
+
+gulp.task('style-dev', function () {
+	return gulp.src('src/css/style.css')
+		.pipe(plumber({ errorHandler: onError }))
+		.pipe(sourcemaps.init())
+		.pipe(postcss(pluginsDev))
+		.pipe(sourcemaps.write('.'))
+		.pipe(gulp.dest(buildDir + themeDir + themeName + DS + 'assets' + DS + 'css'))
+		.pipe(browserSync.stream({ match: '**/*.css' }));
+});
+
+
+/**
+ * Task: 'copy-fonts'
+ *
+ *	1. Copy the project's font files to the 'dev' directory
+ *
+ */
+gulp.task('copy-fonts', function(){
+
+});
+
+/**
+ * Task: 'compress-images'
+ *
+ *	1. Check for and compress any uncompressed project images
+ *
+ */
+//gulp.task('compress-images', () => { // ES6 syntax
+gulp.task('compress-images', function() {
+  return gulp.src(images.src)
+    .pipe(newer(images.dest))
+    .pipe(imagemin())
+    .pipe(gulp.dest(images.dest));
+});
+
+/**
+ * Task: 'copy-images'
+ *
+ *	1. Copy the project's image files to the 'dev' directory
+ *
+ */
+gulp.task('copy-images', function(){
+
+});
+
+/**
+ * Task: 'copy-js'
+ *
+ *	1. Pre-process the project's JS files
+ *	2. Copy the project's compiled JS files to the 'dev' directory
+ *
+ */
+gulp.task('copy-js', function(){
+
+});
+
+/**
+ * Task: 'copy-includes'
+ *
+ *	1. Copy the project's 'include' files to the 'dev' directory
+ *
+ */
+gulp.task('copy-includes', function(){
+
+});
+
+/**
+ * Task: 'copy-languages'
+ *
+ *	1. Copy the project's 'languages' files to the 'dev' directory
+ *
+ */
+gulp.task('copy-languages', function(){
+
+});
+
+/**
+ * Task: 'copy-plugins'
+ *
+ *	1. Copy the project's 'plugins' to the 'dev' directory
+ *
+ */
+gulp.task('copy-plugins', function(){
+
+});
+
+/**
+ * Task: 'copy-src'
+ *
+ *	1. Copy the project's 'src' files and folders to the 'dev' directory
+ *
+ */
+gulp.task('copy-src', function(){
+
+});
+
+/**
+ * Task: 'watch'
+ *
+ *	1. Watch for file changes and run appropriate specific tasks.
+ *
+ */
+gulp.task('watch', function(){
+
+});
 /*
-what now?
-*/
+gulp.task('copy-theme-dev', function () {
+	if (!fs.existsSync(buildDir)) {
+		gutil.log(buildNotFound);
+		process.exit(1);
+	} else {
+		gulp.src('src/theme/**')
+			.pipe(gulp.dest(buildDir + themeDir + themeName));
+	}
+});
 
+gulp.task('copy-fonts-dev', function () {
+	gulp.src('src/fonts/**')
+		.pipe(gulp.dest(buildDir + themeDir + themeName + DS + 'assets' + DS + 'fonts'));
+});
+
+gulp.task('copy-images-dev', function () {
+	gulp.src('src/img/**')
+		.pipe(gulp.dest(buildDir + themeDir + themeName + DS + 'assets' + DS + 'images'));
+});
+*/
+/**
+ * Task: 'browser-sync'
+ *
+ * Live browser reloading, CSS injection, and localhost tunneling:
+ *
+ *	1. Specifies the project URL
+ *	2. Allows using a custom port
+ *	3. Allows stopping the browser from opening automatically
+ *	4. Allows turning off Browsersync popups in the browser
+ *	5. Allows forcing a page refresh on changes to CSS files (instead of injecting CSS into the DOM)
+ * 
+ * @link http://www.browsersync.io/docs/options/
+ *
+ */
+ gulp.task( 'browser-sync', function() {
+  browserSync.init( {
+    proxy: proxyAddress, // Using localhost sub directories
+    //port: 7000, // Use a specific port (instead of the one auto-detected by Browsersync)
+    //open: false, // Stop the browser from automatically opening
+    //notify: false, // Don't show any notifications in the browser
+    //injectChanges: false // Don't try to inject, just do a page refresh
+  });
+});
+
+gulp.watch('**/*.php').on('change', function () {
+    browserSync.reload();
+});
 
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------

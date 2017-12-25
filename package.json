@@ -15,10 +15,14 @@
   "author": "Arnold Wytenburg",
   "license": "MIT",
   "devDependencies": {
+    "browser-sync": "^2.21.0",
     "del": "^3.0.0",
     "fs": "0.0.1-security",
     "gulp": "^3.9.1",
+    "gulp-imagemin": "^4.0.0",
     "gulp-inject-string": "^1.1.0",
+    "gulp-newer": "^1.3.0",
+    "gulp-plumber": "^1.1.0",
     "gulp-remote-src": "^0.4.3",
     "gulp-unzip": "^0.2.0",
     "gulp-util": "^3.0.8"
