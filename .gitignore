@@ -3,6 +3,7 @@ node_modules
 .tmp
 .sass-cache
 build/**
+dist/**
 components/**/fonts
 components/**/img
 package-lock.json

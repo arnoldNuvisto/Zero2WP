@@ -7,80 +7,80 @@
  * @author Arnold Wytenburg (@startupfreak)
  * @version 0.0.2
  */
-/**
- * Configuration... Edit these variables to set up your project.
- *
- * @NOTE: You can specify <<glob or array of globs>> n paths. 
- */
 /* -------------------------------------------------------------------------------------------------
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING HERE
-
-// Project related.
+/** 
+ * @TODO: merge projectName and themeName into one variable, then push theme into an object
+ */
+/**
+ * @TODO: sort out a toggle for child vs new themes
+ */
 var projectName             = 'Zero2WP';
 var projectURL              = '/' + projectName + '/build/wordpress/';
 var proxyAddress			= '127.0.0.1' + projectURL;
 
-var devDir 					= './build/';
-var distDir					= './dist/';
-var componentsDir			= './components/';
-var assetsDir 				= {
-	css 	: componentsDir + 'assets/css/',
-	fonts 	: componentsDir + 'assets/fonts/',
-	img 	: componentsDir + 'assets/img/',
-	js 		: componentsDir + 'assets/js/'
-};
-
-var themesDir 				= 'wordpress/wp-content/themes/';
 var themeName 				= 'nuvisto';
-var themeDir 				= themesDir + themeName;
-var pluginsDir 				= 'wordpress/wp-content/plugins/';
+var themeDest 				= 'wordpress/wp-content/themes/' + themeName + '/';
 
-// Images related.
-//const images = { // ES6 syntax
-var images 					= {
-  src 	: assetsDir.img + 'raw/**/*.{png,jpg,gif,svg}',
-  dest  : assetsDir.img
+var environment				= {
+	dev 	: './build/',
+	dist 	: './dist/',
+	src 	: './components/'
 };
+
+var includes 				= {
+	src  	: environment.src + 'inc/',
+	dest 	: environment.dev + themeDest + 'inc/'
+};
+
+var languages 				= {
+	src  	: environment.src + 'languages/',
+	dest 	: environment.dev + themeDest + 'languages/'
+};
+
+var plugins 				= {
+	src 	: environment.src + 'plugins/', 
+	dest 	: environment.dev + 'wordpress/wp-content/plugins/'
+};
+
+var templates = {
+	src 	: environment.src + 'src/',
+	dest 	: environment.dev + themeDest 
+};
+
+var style = {
+	src 	: environment.src + 'assets/css/',
+	dest 	: environment.dev + themeDest + 'assets/css/'
+};
+
+var img = {
+	src 	: environment.src + 'assets/img/',
+	dest 	: environment.dev + themeDest + 'assets/img/'
+};
+// Images related:
+//const images = { // ES6 syntax
+//var images 					= {
+//  src 	: assetsDir.img + 'raw/**/*.{png,jpg,gif,svg}',
+//  dest  : assetsDir.img
+//};
 //var imagesSRC               = './assets/img/raw/**/*.{png,jpg,gif,svg}'; // Source folder of images which should be optimized.
 //var imagesDestination       = './assets/img/'; // Destination folder of optimized images. Must be different from the imagesSRC folder.
 
-// Translation related.
-var text_domain             = 'WPGULP'; // Your textdomain here.
-var translationFile         = 'WPGULP.pot'; // Name of the transalation file.
-var translationDestination  = './languages'; // Where to save the translation files.
-var packageName             = 'WPGULP'; // Package name.
-var bugReport               = 'https://arnoldwytenburg.com/'; // Where can users report bugs.
-var lastTranslator          = 'Arnold Wytenburg <arnold@arnoldwytenburg.com>'; // Last translator Email ID.
-var team                    = 'Arnold Wytenburg <arnold@arnoldwytenburg.com>'; // Team's Email ID.
+var fonts = {
+	src 	: environment.src + 'assets/fonts/',
+	dest 	: environment.dev + themeDest + 'assets/fonts/'
+};
 
-// Style related.
-var styleSRC                = './assets/css/style.scss'; // Path to main .scss file.
-var styleDestination        = './'; // Path to place the compiled CSS file.
-// Default set to root folder.
+var js = {
+	src 	: environment.src + 'assets/js/',
+	dest 	: environment.dev + themeDest + 'assets/js/'
+};
 
-// JS Vendor related.
-var jsVendorSRC             = './assets/js/vendor/*.js'; // Path to JS vendor folder.
-var jsVendorDestination     = './assets/js/'; // Path to place the compiled JS vendors file.
-var jsVendorFile            = 'vendors'; // Compiled JS vendors file name.
-// Default set to vendors i.e. vendors.js.
-
-// JS Custom related.
-var jsCustomSRC             = './assets/js/custom/*.js'; // Path to JS custom scripts folder.
-var jsCustomDestination     = './assets/js/'; // Path to place the compiled JS custom scripts file.
-var jsCustomFile            = 'custom'; // Compiled JS custom file name.
-// Default set to custom i.e. custom.js.
-
-// Watch files paths.
-var styleWatchFiles         = './assets/css/**/*.scss'; // Path to all *.scss files inside css folder and inside them.
-var vendorJSWatchFiles      = './assets/js/vendor/*.js'; // Path to all vendor JS files.
-var customJSWatchFiles      = './assets/js/custom/*.js'; // Path to all custom JS files.
-var projectPHPWatchFiles    = './**/*.php'; // Path to all PHP files.
-
-// Browsers you care about for autoprefixing.
-// Browserlist is at https://github.com/ai/browserslist
-const AUTOPREFIXER_BROWSERS = [
+// See https://github.com/ai/browserslist
+//const AUTOPREFIXER_BROWSERS = [
+var AUTOPREFIXER_BROWSERS = [
     'last 2 version',
     '> 1%',
     'ie >= 9',
@@ -99,7 +99,6 @@ const AUTOPREFIXER_BROWSERS = [
 /* -------------------------------------------------------------------------------------------------
 Load Plugins
 -------------------------------------------------------------------------------------------------- */
-var browserSync  	= require('browser-sync');
 var gulp 			= require('gulp');
 var gutil 			= require('gulp-util');
 var del 			= require('del');
@@ -107,13 +106,44 @@ var fs 				= require('fs');
 var imagemin      	= require('gulp-imagemin');
 var inject 			= require('gulp-inject-string');
 var newer    		= require('gulp-newer');
+var notify	        = require('gulp-notify');
 var plumber 		= require('gulp-plumber');
 var remoteSrc 		= require('gulp-remote-src');
 var unzip 			= require('gulp-unzip');
 
-var reload       = browserSync.reload; // For manual browser reload.
+// Browsersync related
+var browserSync  	= require('browser-sync');
+var reload       	= browserSync.reload; // For manual browser reload.
+
+// postCSS related
+var cssnano 		= require('cssnano');
+var cssnext 		= require('postcss-cssnext');
+var partialimport 	= require('postcss-easy-import');
+var postcss 		= require('gulp-postcss');
+var sourcemaps 		= require('gulp-sourcemaps');
+var pluginsDev 		= [
+	partialimport,
+	cssnext({
+		features: {
+			colorHexAlpha: false
+		}
+	})
+];
+var pluginsProd 	= [
+	partialimport,
+	cssnext({
+		features: {
+			colorHexAlpha: false
+		}
+	})
+];
 
 //--------------------------------------------------------------------------------------------------
+/*
+ gulp.task('log', function() {
+  gutil.log(environment.dev);
+});
+*/
 /* -------------------------------------------------------------------------------------------------
  * Installation Tasks
  * 
@@ -130,29 +160,33 @@ var reload       = browserSync.reload; // For manual browser reload.
  *
  */
 /**
+ * @TODO: include a function to build out an installation-specific 'wp_config.php' file
+ */
+/**
  * Task: 'cleanup'
  *
- *	1. Gets rid of a pre-exisiting 'dev' folder, if present
- *	2. Gets rid of a pre-exisiting 'dist' folder, if present
+ *	1. Empties a pre-exisiting 'dev' folder, if present
+ *	2. Empties a pre-exisiting 'dist' folder, if present
  *
  */
 gulp.task('cleanup', function () {
-	del([devDir + '**']);
-	del([distDir + '**']);
+	del([environment.dev + '**/*']);
+	del([environment.dist + '**/*']);
 });
 
 /**
  * Task: 'download-wordpress'
  *
- *	1. Gets a zip file containing the most recent version of Wordpress from wordpress.org
- *	2. Places the file into the 'dev' folder for installation
+ *	1. Retrieves a zip file containing the most recent version of Wordpress from wordpress.org
+ *	2. Places the zip file into the 'dev' folder for installation
  *
  */
 gulp.task('download-wordpress', function () {
 	remoteSrc(['latest.zip'], {
 		base: 'https://wordpress.org/'
 	})
-		.pipe(gulp.dest(devDir));
+		.pipe(gulp.dest(environment.dev))
+    	.pipe( notify( { message: 'TASK: WP downloaded', onLast: true } ) );
 });
 
 /**
@@ -170,49 +204,53 @@ gulp.task('setup-wordpress', [
 /**
  * Task: 'unzip-wordpress'.
  *
- *	1. Unzip the downloaded file
- *	2. Place the unzipped Wordpress files into the 'dev' folder
+ *	1. Unzips the downloaded file
+ *	2. Places the unzipped Wordpress files into the 'dev' folder
  *
  */
 gulp.task('unzip-wordpress', function () {
-	gulp.src(devDir + 'latest.zip')
+	gulp.src(environment.dev + 'latest.zip')
 		.pipe(unzip())
-		.pipe(gulp.dest(devDir));
+		.pipe(gulp.dest(environment.dev));
 });
 
 /**
  * Task: 'copy-config'.
  *
  *	1. If a default config file exists:
- 		1.1 Update the file to disable 'cron'
- *		1.2 Place the file into the 'dev' folder
- *	3. Notify the user that the install is completed
+ 		1.1 Updates the file to disable 'cron'
+ *		1.2 Places the file into the 'dev' folder
+ *	3. Notifies the user that the install is completed
  *
  * NOTE: including the 'wp-config.php' file is optional - which is why there is an 
  * 'on('end, ... )' instruction included here: without this instruction, the script would bork if 
  * it doesn't find a file; including the stmt forces closure.
  *
  */
+/**
+ * @TODO: use '.on(error, blah blah) ', then move the copy stuff to a discreet function (???)
+ * ... might be useful with creating the config file
+ */
 gulp.task('copy-config', function () {
 	gulp.src('wp-config.php')
 		.pipe(inject.after('define(\'DB_COLLATE\', \'\');', '\ndefine(\'DISABLE_WP_CRON\', true);'))
-		.pipe(gulp.dest(devDir + 'wordpress'))
+		.pipe(gulp.dest(environment.dev + 'wordpress'))
 		.on('end', function () {
 				gutil.beep();
-				gutil.log(devServerReady);
-				gutil.log(thankYou);
+				gutil.log(projectReady);
+				gutil.log(thanks);
 			});
 });
 
 /**
  * Task: 'disable-cron'.
  *
- *	1. Check the 'wp-config.php' file
- *	2. Disable 'cron' if not already disabled
+ *	1. Checks the 'wp-config.php' file
+ *	2. Disables 'cron' if not already disabled
  *
  */
 gulp.task('disable-cron', function () {
-	fs.readFile(devDir + 'wordpress/wp-config.php', function (err, data) {
+	fs.readFile(environment.dev + 'wordpress/wp-config.php', function (err, data) {
 		if (err) {
 			gutil.log(wpFy + ' - ' + errorMsg + ' Something went wrong, WP_CRON was not disabled!');
 			process.exit(1);
@@ -222,7 +260,7 @@ gulp.task('disable-cron', function () {
 		} else {
 			gulp.src(buildDir + 'wordpress/wp-config.php')
 			.pipe(inject.after('define(\'DB_COLLATE\', \'\');', '\ndefine(\'DISABLE_WP_CRON\', true);'))
-			.pipe(gulp.dest(devDir + 'wordpress'));
+			.pipe(gulp.dest(environment.dev + 'wordpress'));
 		}
 	});
 });
@@ -232,10 +270,22 @@ gulp.task('disable-cron', function () {
  * 
  * run "gulp"
  *
- * Updates the current project's theme files in the dev directory:
+ * Adds/Updates the project's theme files in the dev directory:
  *
  *	1. 
  *
+ */
+var buildTasks = [
+	'load-templates',
+	'load-includes',
+	'load-languages',
+	'load-plugins',
+	'load-assets',
+	'browser-sync',
+	'watch'
+];
+/**
+ * @TODO: include a function to build out a theme-specific 'style.css' file
  */
 /**
  * Task: 'default'
@@ -243,49 +293,82 @@ gulp.task('disable-cron', function () {
  *	1. Runs all of the specified 'build tasks', in order
  *
  */
- //gulp.task('default', ['buildTasks']);
-gulp.task('default', ['browser-sync']);
+gulp.task('default', buildTasks);
 
-var buildTasks = [
-	'copy-assets',
-	'copy-includes',
-	'copy-languages',
-	'copy-plugins',
-	'copy-src',
-	'watch'
-];
+/**
+ * Task: 'copy-src'
+ *
+ *	1. Copies the project's 'src' files and folders to the 'dev' theme directory
+ *
+ */
+gulp.task('load-templates', function(){
+	if (!fs.existsSync(environment.dev)) {
+		gutil.log(wpMissing);
+		process.exit(1);
+	} else {
+		gulp.src(templates.src + '**/*')
+			.pipe(gulp.dest(templates.dest));
+	}
+});
+
+/**
+ * Task: 'copy-includes'
+ *
+ *	1. Copy the project's 'include' files to the 'dev' theme directory
+ *
+ */
+gulp.task('load-includes', function(){
+	gulp.src(includes.src + '**/*')
+		.pipe(gulp.dest(includes.dest));
+});
+
+/**
+ * Task: 'copy-languages'
+ *
+ *	1. Copy the project's 'languages' files to the 'dev' theme directory
+ *
+ */
+gulp.task('load-languages', function(){
+	gulp.src(languages.src + '**/*')
+		.pipe(gulp.dest(languages.dest));
+});
+
+/**
+ * Task: 'copy-plugins'
+ *
+ *	1. Copy the project's 'plugins' to the 'dev' install directory
+ *
+ */
+gulp.task('load-plugins', function(){
+	gulp.src(plugins.src + '**/*')
+		.pipe(gulp.dest(plugins.dest));
+});
 
 /**
  * Task: 'copy-assets'
  *
  *	1. Runs all of the 'build tasks' related to processing and copying the 
- *	the project's asset files to the 'dev' directiory, in order
+ *	the project's asset files to the 'dev' directory, in order
  *
  */
-gulp.task('copy-assets', ['copy-css','copy-fonts','compress-images','copy-images','copy-js']);
+gulp.task('load-assets', ['load-styles','load-fonts','load-images','load-js']);
 
 /**
- * Task: 'copy-css'
+ * Task: 'load-styles'
  *
- *	1. Pre-process the project's CSS, PostCSS, SASS, and/or LESS files as needed
- *	2. Copy the project's compiled CSS files to the 'dev' directory
+ *	1. Copy the project's compiled CSS files to the 'dev' build directory
  *
  */
-gulp.task('copy-css', function(){
-
-});
-
-
-gulp.task('style-dev', function () {
-	return gulp.src('src/css/style.css')
+/**
+ * @TODO: modify this task to run the compiler and loader seperately,
+ * and possibly to add sourcemaps
+ */
+gulp.task('load-styles', function(){
+	return gulp.src(style.src + '**/*')
 		.pipe(plumber({ errorHandler: onError }))
-		.pipe(sourcemaps.init())
-		.pipe(postcss(pluginsDev))
-		.pipe(sourcemaps.write('.'))
-		.pipe(gulp.dest(buildDir + themeDir + themeName + DS + 'assets' + DS + 'css'))
-		.pipe(browserSync.stream({ match: '**/*.css' }));
+		.pipe(gulp.dest(style.dest))
+		.pipe(browserSync.stream({ match: '**/*.css' })); // this may not be as easy as it looks!
 });
-
 
 /**
  * Task: 'copy-fonts'
@@ -293,8 +376,53 @@ gulp.task('style-dev', function () {
  *	1. Copy the project's font files to the 'dev' directory
  *
  */
-gulp.task('copy-fonts', function(){
+gulp.task('load-fonts', function(){
+	gulp.src(fonts.src + '**/*')
+		.pipe(gulp.dest(fonts.dest));
+});
 
+/**
+ * Task: 'copy-images'
+ *
+ *	1. Copy the project's image files to the 'dev' directory
+ *
+ */
+gulp.task('load-images', function(){
+	gulp.src(img.src + '**/*')
+		.pipe(gulp.dest(img.dest));
+});
+
+/**
+ * Task: 'copy-js'
+ *
+ *	1. Pre-process the project's JS files
+ *	2. Copy the project's compiled JS files to the 'dev' directory
+ *
+ */
+gulp.task('load-js', function(){
+	gulp.src(js.src + '**/*')
+		.pipe(gulp.dest(js.dest));
+});
+
+/**
+ * Task: 'compile-css'
+ *
+ *	1. Pre-process the project's CSS, PostCSS, SASS, and/or LESS files as needed
+ *	2. Copy the project's compiled CSS files to the 'dev' directory
+ *
+ * SEE https://github.com/postcss/gulp-postcss
+ */
+/**
+ * @TODO: modify to run before 'load-styles'
+ */
+gulp.task('compile-css', function () {
+	return gulp.src(style.src)
+		.pipe(plumber({ errorHandler: onError }))
+		.pipe(sourcemaps.init())
+		.pipe(postcss(pluginsDev))
+		.pipe(sourcemaps.write('.'))
+		.pipe(gulp.dest(style.dest))
+		.pipe(browserSync.stream({ match: '**/*.css' }));
 });
 
 /**
@@ -305,103 +433,12 @@ gulp.task('copy-fonts', function(){
  */
 //gulp.task('compress-images', () => { // ES6 syntax
 gulp.task('compress-images', function() {
-  return gulp.src(images.src)
-    .pipe(newer(images.dest))
+  return gulp.src(img.src)
+    .pipe(newer(img.dest))
     .pipe(imagemin())
-    .pipe(gulp.dest(images.dest));
+    .pipe(gulp.dest(img.dest));
 });
 
-/**
- * Task: 'copy-images'
- *
- *	1. Copy the project's image files to the 'dev' directory
- *
- */
-gulp.task('copy-images', function(){
-
-});
-
-/**
- * Task: 'copy-js'
- *
- *	1. Pre-process the project's JS files
- *	2. Copy the project's compiled JS files to the 'dev' directory
- *
- */
-gulp.task('copy-js', function(){
-
-});
-
-/**
- * Task: 'copy-includes'
- *
- *	1. Copy the project's 'include' files to the 'dev' directory
- *
- */
-gulp.task('copy-includes', function(){
-
-});
-
-/**
- * Task: 'copy-languages'
- *
- *	1. Copy the project's 'languages' files to the 'dev' directory
- *
- */
-gulp.task('copy-languages', function(){
-
-});
-
-/**
- * Task: 'copy-plugins'
- *
- *	1. Copy the project's 'plugins' to the 'dev' directory
- *
- */
-gulp.task('copy-plugins', function(){
-
-});
-
-/**
- * Task: 'copy-src'
- *
- *	1. Copy the project's 'src' files and folders to the 'dev' directory
- *
- */
-gulp.task('copy-src', function(){
-
-});
-
-/**
- * Task: 'watch'
- *
- *	1. Watch for file changes and run appropriate specific tasks.
- *
- */
-gulp.task('watch', function(){
-
-});
-/*
-gulp.task('copy-theme-dev', function () {
-	if (!fs.existsSync(buildDir)) {
-		gutil.log(buildNotFound);
-		process.exit(1);
-	} else {
-		gulp.src('src/theme/**')
-			.pipe(gulp.dest(buildDir + themeDir + themeName));
-	}
-});
-
-gulp.task('copy-fonts-dev', function () {
-	gulp.src('src/fonts/**')
-		.pipe(gulp.dest(buildDir + themeDir + themeName + DS + 'assets' + DS + 'fonts'));
-});
-
-gulp.task('copy-images-dev', function () {
-	gulp.src('src/img/**')
-		.pipe(gulp.dest(buildDir + themeDir + themeName + DS + 'assets' + DS + 'images'));
-});
-*/
 /**
  * Task: 'browser-sync'
  *
@@ -416,7 +453,7 @@ gulp.task('copy-images-dev', function () {
  * @link http://www.browsersync.io/docs/options/
  *
  */
- gulp.task( 'browser-sync', function() {
+gulp.task( 'browser-sync', function() {
   browserSync.init( {
     proxy: proxyAddress, // Using localhost sub directories
     //port: 7000, // Use a specific port (instead of the one auto-detected by Browsersync)
@@ -426,8 +463,28 @@ gulp.task('copy-images-dev', function () {
   });
 });
 
-gulp.watch('**/*.php').on('change', function () {
-    browserSync.reload();
+/**
+ * Task: 'watch'
+ *
+ *	1. Watch for file changes and run appropriate specific tasks.
+ *
+ */
+gulp.task('watch', function(){
+
+	gulp.watch(style.src + '**', ['load-styles']); // stream changes
+	gulp.watch(fonts.src + '**', ['load-fonts', reload]);
+	gulp.watch(img.src + '**', ['load-images']); // stream changes
+	gulp.watch(includes.src + '**', ['load-includes', reload]);
+	gulp.watch(js.src + '**', ['load-js', reload]);
+	gulp.watch(languages.src + '**', ['load-lang', reload]);
+	gulp.watch(plugins.src + '**', ['load-plugins', reload]);
+	gulp.watch(templates.src + '**', ['load-templates', reload]);
+
+	gulp.watch(environment.dev + 'wordpress/wp-config*.php', function(event){
+		if(event.type === 'added') { 
+			gulp.start('disable-cron');
+		}
+	});
 });
 
 //--------------------------------------------------------------------------------------------------
@@ -444,14 +501,17 @@ var onError = function (err) {
 /* -------------------------------------------------------------------------------------------------
 Utility Variables
 -------------------------------------------------------------------------------------------------- */
+/**
+ * @TODO: update/cleanup this stuff		
+ */
 var date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
-var errorMsg = '\x1b[41mError\x1b[0m';
-var devServerReady = 'Your development server is ready, start the workflow with the command: $ \x1b[1mnpm run dev\x1b[0m';
-var buildNotFound = errorMsg + ' ⚠️　- You need to install WordPress first. Run the command: $ \x1b[1mnpm run install:wordpress\x1b[0m';
+var errorMsg = '\x1b[41mHey you!\x1b[0m';
+var projectReady = 'Your new WP project is ready. Start the workflow by running this command: $ \x1b[1mgulp\x1b[0m';
+var wpMissing = errorMsg + ' Wordpress must be installed first. Run: $ \x1b[1mnpm run install:wordpress\x1b[0m';
 var filesGenerated = 'Your ZIP template file was generated in: \x1b[1m' + __dirname + '/dist/' + themeName + '.zip\x1b[0m - ✅';
 var pluginsGenerated = 'Plugins are generated in: \x1b[1m' + __dirname + '/dist/plugins/\x1b[0m - ✅';
 var backupsGenerated = 'Your backup was generated in: \x1b[1m' + __dirname + '/backups/' + date + '.zip\x1b[0m - ✅';
 var wpFy = '\x1b[1mZero2WP\x1b[0m';
 var wpFyUrl = '\x1b[2m - https://github.com/arnoldNuvisto/Zero2WP\x1b[0m';
-var thankYou = 'Thank you for using ' + wpFy + wpFyUrl;
+var thanks = 'Thank you for using ' + wpFy + wpFyUrl;
 
