@@ -11,51 +11,25 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING HERE
-/** 
- * @TODO: merge projectName and themeName into one variable, then push theme into an object
- */
 /**
  * @TODO: sort out a toggle for child vs new themes
  */
-var projectName             = 'Zero2WP';
-var projectURL              = '/' + projectName + '/build/wordpress/';
-var proxyAddress			= '127.0.0.1' + projectURL;
-
 var themeName 				= 'nuvisto';
 var themeDest 				= 'wordpress/wp-content/themes/' + themeName + '/';
 
 var environment				= {
+	proxy 	: '127.0.0.1/Zero2WP/build/wordpress/',
 	dev 	: './build/',
 	dist 	: './dist/',
 	src 	: './components/'
 };
 
-var includes 				= {
-	src  	: environment.src + 'inc/',
-	dest 	: environment.dev + themeDest + 'inc/'
+var fonts 					= {
+	src 	: environment.src + 'assets/fonts/',
+	dest 	: environment.dev + themeDest + 'assets/fonts/'
 };
 
-var languages 				= {
-	src  	: environment.src + 'languages/',
-	dest 	: environment.dev + themeDest + 'languages/'
-};
-
-var plugins 				= {
-	src 	: environment.src + 'plugins/', 
-	dest 	: environment.dev + 'wordpress/wp-content/plugins/'
-};
-
-var templates = {
-	src 	: environment.src + 'src/',
-	dest 	: environment.dev + themeDest 
-};
-
-var style = {
-	src 	: environment.src + 'assets/css/',
-	dest 	: environment.dev + themeDest + 'assets/css/'
-};
-
-var img = {
+var img 					= {
 	src 	: environment.src + 'assets/img/',
 	dest 	: environment.dev + themeDest + 'assets/img/'
 };
@@ -68,18 +42,37 @@ var img = {
 //var imagesSRC               = './assets/img/raw/**/*.{png,jpg,gif,svg}'; // Source folder of images which should be optimized.
 //var imagesDestination       = './assets/img/'; // Destination folder of optimized images. Must be different from the imagesSRC folder.
 
-var fonts = {
-	src 	: environment.src + 'assets/fonts/',
-	dest 	: environment.dev + themeDest + 'assets/fonts/'
+var includes 				= {
+	src  	: environment.src + 'inc/',
+	dest 	: environment.dev + themeDest + 'inc/'
 };
 
-var js = {
+var js 						= {
 	src 	: environment.src + 'assets/js/',
 	dest 	: environment.dev + themeDest + 'assets/js/'
 };
 
+var languages 				= {
+	src  	: environment.src + 'languages/',
+	dest 	: environment.dev + themeDest + 'languages/'
+};
+
+var plugins 				= {
+	src 	: environment.src + 'plugins/', 
+	dest 	: environment.dev + 'wordpress/wp-content/plugins/'
+};
+
+var style 					= {
+	src 	: environment.src + 'assets/css/' + 'sass/',
+	dest 	: environment.dev + themeDest
+};
+
+var templates 				= {
+	src 	: environment.src + 'src/',
+	dest 	: environment.dev + themeDest 
+};
+
 // See https://github.com/ai/browserslist
-//const AUTOPREFIXER_BROWSERS = [
 var AUTOPREFIXER_BROWSERS = [
     'last 2 version',
     '> 1%',
@@ -113,13 +106,17 @@ var unzip 			= require('gulp-unzip');
 
 // Browsersync related
 var browserSync  	= require('browser-sync');
-var reload       	= browserSync.reload; // For manual browser reload.
+var reload       	= browserSync.reload;
 
-// postCSS related
+// Style related
+var assets 			= require('postcss-assets');
+var autoprefixer 	= require('autoprefixer');
+var cssmq 			= require('css-mqpacker'); // risky, not used
 var cssnano 		= require('cssnano');
 var cssnext 		= require('postcss-cssnext');
 var partialimport 	= require('postcss-easy-import');
 var postcss 		= require('gulp-postcss');
+var sass 			= require('gulp-sass');
 var sourcemaps 		= require('gulp-sourcemaps');
 var pluginsDev 		= [
 	partialimport,
@@ -139,11 +136,6 @@ var pluginsProd 	= [
 ];
 
 //--------------------------------------------------------------------------------------------------
-/*
- gulp.task('log', function() {
-  gutil.log(environment.dev);
-});
-*/
 /* -------------------------------------------------------------------------------------------------
  * Installation Tasks
  * 
@@ -275,30 +267,63 @@ gulp.task('disable-cron', function () {
  *	1. 
  *
  */
-var buildTasks = [
+/**
+ * Task: 'default'
+ *
+ *	1. Launches the specified default tasks when the user runs the "gulp" or "gulp --verbose" command
+ *
+ */
+gulp.task('default', ['watch']);
+
+/**
+ * Task: 'watch'
+ *
+ *	1. Initiate Browsersync
+ *	2. Watch for file changes and run appropriate specific tasks.
+ *
+ */
+gulp.task('watch', function(){
+	browserSync.init({
+		proxy: environment.proxy,
+		//port: 7000, // Use a specific port (instead of the one auto-detected by Browsersync)
+		open: 'external',
+		//notify: false, // Don't show any notifications in the browser
+		//injectChanges: false // Don't try to inject, just do a page refresh
+	});
+	gulp.watch(style.src + '**/*', ['load-styles']); // stream changes
+	gulp.watch(fonts.src + '**/*', ['load-fonts', reload]);
+	gulp.watch(img.src + '**', ['load-images']); // stream changes
+	gulp.watch(includes.src + '**/*', ['load-includes', reload]);
+	gulp.watch(js.src + '**/*', ['load-js', reload]);
+	gulp.watch(languages.src + '**/*', ['load-lang', reload]);
+	gulp.watch(plugins.src + '**/*', ['load-plugins', reload]);
+	gulp.watch(templates.src + '**/*', ['load-templates', reload]);
+	gulp.watch(environment.dev + 'wordpress/wp-config*.php', function(event){
+		if(event.type === 'added') { 
+			gulp.start('disable-cron');
+		}
+	});
+});
+
+/**
+ * Task: 'dev'
+ *
+ *	1. Runs all of the specified 'build tasks', in order
+ *
+ */
+gulp.task('dev', [
 	'load-templates',
 	'load-includes',
 	'load-languages',
 	'load-plugins',
 	'load-assets',
-	'browser-sync',
 	'watch'
-];
-/**
- * @TODO: include a function to build out a theme-specific 'style.css' file
- */
-/**
- * Task: 'default'
- *
- *	1. Runs all of the specified 'build tasks', in order
- *
- */
-gulp.task('default', buildTasks);
+]);
 
 /**
- * Task: 'copy-src'
+ * Task: 'load-templates'
  *
- *	1. Copies the project's 'src' files and folders to the 'dev' theme directory
+ *	1. Loads the project's 'src' files and folders to the 'dev' theme directory
  *
  */
 gulp.task('load-templates', function(){
@@ -312,9 +337,9 @@ gulp.task('load-templates', function(){
 });
 
 /**
- * Task: 'copy-includes'
+ * Task: 'load-includes'
  *
- *	1. Copy the project's 'include' files to the 'dev' theme directory
+ *	1. Loads the project's 'include' files to the 'dev' theme directory
  *
  */
 gulp.task('load-includes', function(){
@@ -323,9 +348,9 @@ gulp.task('load-includes', function(){
 });
 
 /**
- * Task: 'copy-languages'
+ * Task: 'load-languages'
  *
- *	1. Copy the project's 'languages' files to the 'dev' theme directory
+ *	1. Loads the project's 'languages' files to the 'dev' theme directory
  *
  */
 gulp.task('load-languages', function(){
@@ -334,9 +359,9 @@ gulp.task('load-languages', function(){
 });
 
 /**
- * Task: 'copy-plugins'
+ * Task: 'load-plugins'
  *
- *	1. Copy the project's 'plugins' to the 'dev' install directory
+ *	1. Loads the project's 'plugins' to the 'dev' install directory
  *
  */
 gulp.task('load-plugins', function(){
@@ -345,7 +370,7 @@ gulp.task('load-plugins', function(){
 });
 
 /**
- * Task: 'copy-assets'
+ * Task: 'load-assets'
  *
  *	1. Runs all of the 'build tasks' related to processing and copying the 
  *	the project's asset files to the 'dev' directory, in order
@@ -356,24 +381,42 @@ gulp.task('load-assets', ['load-styles','load-fonts','load-images','load-js']);
 /**
  * Task: 'load-styles'
  *
- *	1. Copy the project's compiled CSS files to the 'dev' build directory
+ *	1. Compiles the project's SCSS files to CSS
+ *	2. Adds browser prefixes as needed
+ *	3. Creates and saves a sourcemap for the CSS
+ *	4. Loads the finalized CSS file into the 'dev' build directory
  *
  */
-/**
- * @TODO: modify this task to run the compiler and loader seperately,
- * and possibly to add sourcemaps
- */
+var sassOpts = {
+    outputStyle     : 'nested', // expanded
+    imagePath       : img.dest,
+    precision       : 3,
+    errLogToConsole : true,
+	indentType		: 'tab',
+	indentWidth		: '1'
+};
 gulp.task('load-styles', function(){
-	return gulp.src(style.src + '**/*')
+	return gulp.src(style.src + '{style.scss,rtl.scss}')
 		.pipe(plumber({ errorHandler: onError }))
+		//.pipe(sourcemaps.init())
+		.pipe(sass(sassOpts).on('error', sass.logError))
+		.pipe(postcss([
+			assets({
+				loadPaths: [img.src],
+      			basePath: environment.dev,
+      			baseUrl: themeDest
+      		}),
+			autoprefixer(AUTOPREFIXER_BROWSERS)
+		]))
+		//.pipe(sourcemaps.write(style.src + 'maps'))
 		.pipe(gulp.dest(style.dest))
-		.pipe(browserSync.stream({ match: '**/*.css' })); // this may not be as easy as it looks!
+		.pipe(browserSync.stream({ match: '**/*.css' }));
 });
 
 /**
- * Task: 'copy-fonts'
+ * Task: 'load-fonts'
  *
- *	1. Copy the project's font files to the 'dev' directory
+ *	1. Loads the project's font files to the 'dev' directory
  *
  */
 gulp.task('load-fonts', function(){
@@ -382,9 +425,9 @@ gulp.task('load-fonts', function(){
 });
 
 /**
- * Task: 'copy-images'
+ * Task: 'load-images'
  *
- *	1. Copy the project's image files to the 'dev' directory
+ *	1. Loads the project's image files to the 'dev' directory
  *
  */
 gulp.task('load-images', function(){
@@ -393,10 +436,10 @@ gulp.task('load-images', function(){
 });
 
 /**
- * Task: 'copy-js'
+ * Task: 'load-js'
  *
- *	1. Pre-process the project's JS files
- *	2. Copy the project's compiled JS files to the 'dev' directory
+ *	1. Pre-processes the project's JS files
+ *	2. Loads the project's compiled JS files to the 'dev' directory
  *
  */
 gulp.task('load-js', function(){
@@ -405,30 +448,9 @@ gulp.task('load-js', function(){
 });
 
 /**
- * Task: 'compile-css'
- *
- *	1. Pre-process the project's CSS, PostCSS, SASS, and/or LESS files as needed
- *	2. Copy the project's compiled CSS files to the 'dev' directory
- *
- * SEE https://github.com/postcss/gulp-postcss
- */
-/**
- * @TODO: modify to run before 'load-styles'
- */
-gulp.task('compile-css', function () {
-	return gulp.src(style.src)
-		.pipe(plumber({ errorHandler: onError }))
-		.pipe(sourcemaps.init())
-		.pipe(postcss(pluginsDev))
-		.pipe(sourcemaps.write('.'))
-		.pipe(gulp.dest(style.dest))
-		.pipe(browserSync.stream({ match: '**/*.css' }));
-});
-
-/**
  * Task: 'compress-images'
  *
- *	1. Check for and compress any uncompressed project images
+ *	1. Checks for and compresses any previously uncompressed project images
  *
  */
 //gulp.task('compress-images', () => { // ES6 syntax
@@ -437,54 +459,6 @@ gulp.task('compress-images', function() {
     .pipe(newer(img.dest))
     .pipe(imagemin())
     .pipe(gulp.dest(img.dest));
-});
-
-/**
- * Task: 'browser-sync'
- *
- * Live browser reloading, CSS injection, and localhost tunneling:
- *
- *	1. Specifies the project URL
- *	2. Allows using a custom port
- *	3. Allows stopping the browser from opening automatically
- *	4. Allows turning off Browsersync popups in the browser
- *	5. Allows forcing a page refresh on changes to CSS files (instead of injecting CSS into the DOM)
- * 
- * @link http://www.browsersync.io/docs/options/
- *
- */
-gulp.task( 'browser-sync', function() {
-  browserSync.init( {
-    proxy: proxyAddress, // Using localhost sub directories
-    //port: 7000, // Use a specific port (instead of the one auto-detected by Browsersync)
-    //open: false, // Stop the browser from automatically opening
-    //notify: false, // Don't show any notifications in the browser
-    //injectChanges: false // Don't try to inject, just do a page refresh
-  });
-});
-
-/**
- * Task: 'watch'
- *
- *	1. Watch for file changes and run appropriate specific tasks.
- *
- */
-gulp.task('watch', function(){
-
-	gulp.watch(style.src + '**', ['load-styles']); // stream changes
-	gulp.watch(fonts.src + '**', ['load-fonts', reload]);
-	gulp.watch(img.src + '**', ['load-images']); // stream changes
-	gulp.watch(includes.src + '**', ['load-includes', reload]);
-	gulp.watch(js.src + '**', ['load-js', reload]);
-	gulp.watch(languages.src + '**', ['load-lang', reload]);
-	gulp.watch(plugins.src + '**', ['load-plugins', reload]);
-	gulp.watch(templates.src + '**', ['load-templates', reload]);
-
-	gulp.watch(environment.dev + 'wordpress/wp-config*.php', function(event){
-		if(event.type === 'added') { 
-			gulp.start('disable-cron');
-		}
-	});
 });
 
 //--------------------------------------------------------------------------------------------------
@@ -502,7 +476,7 @@ var onError = function (err) {
 Utility Variables
 -------------------------------------------------------------------------------------------------- */
 /**
- * @TODO: update/cleanup this stuff		
+ * @TODO: update/cleanup this stuff... push messages into an array or object
  */
 var date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
 var errorMsg = '\x1b[41mHey you!\x1b[0m';

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "cleanup": "gulp cleanup",
+    "dev": "gulp dev",
     "install:wordpress": "gulp cleanup && gulp download-wordpress && gulp setup-wordpress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,7 +16,9 @@
   "author": "Arnold Wytenburg",
   "license": "MIT",
   "devDependencies": {
+    "autoprefixer": "^7.2.3",
     "browser-sync": "^2.21.0",
+    "css-mqpacker": "^6.0.1",
     "cssnano": "^3.10.0",
     "del": "^3.0.0",
     "fs": "0.0.1-security",
@@ -27,9 +30,11 @@
     "gulp-plumber": "^1.1.0",
     "gulp-postcss": "^7.0.0",
     "gulp-remote-src": "^0.4.3",
+    "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.6.2",
     "gulp-unzip": "^0.2.0",
     "gulp-util": "^3.0.8",
+    "postcss-assets": "^5.0.0",
     "postcss-cssnext": "^3.0.2",
     "postcss-easy-import": "^3.0.0"
   }
