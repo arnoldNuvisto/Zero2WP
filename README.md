@@ -1,4 +1,4 @@
-# Zero2WP v0.0.1
+# Zero2WP v0.0.2
 A workbench for automating the WordPress development workflow.
 
 ## NOTE: Zero2WP is still a work in progress
