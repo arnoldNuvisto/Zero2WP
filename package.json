@@ -4,7 +4,6 @@
   "description": "\"A project to create a Wordpress theme development workflow\"",
   "main": "index.js",
   "scripts": {
-    "build": "gulp build",
     "install:wordpress": "gulp install-wordpress",
     "install:underscores": "gulp install-underscores",
     "build": "gulp build",
