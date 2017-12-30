@@ -11,7 +11,7 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING HERE
-var projectName		= 'Brenda';
+var projectName		= 'z2wptest1';
 var server			= {
 	host		: '127.0.0.1', // aka. 'localhost' on most systems
 	customPort 	: null ,  // replace 'null' with a specific port instead of auto-detecting via Browsersync
@@ -233,8 +233,8 @@ gulp.task('copy-config', ['unzip-wordpress'], function () {
 		.pipe(gulp.dest(_environment.dev + 'wordpress'))
 		.on('end', function () {
 				gutil.beep();
-				gutil.log(projectReady);
-				gutil.log(thanks);
+				gutil.log(msgs.wpReady);
+				gutil.log(msgs.thx);
 			});
 });
 
@@ -248,7 +248,7 @@ gulp.task('copy-config', ['unzip-wordpress'], function () {
 gulp.task('disable-cron', function () {
 	fs.readFile(_environment.dev + 'wordpress/wp-config.php', function (err, data) {
 		if (err) {
-			gutil.log(wpFy + ' - ' + errorMsg + ' Something went wrong, WP_CRON was not disabled!');
+			gutil.log(msgs.Z2WPName + ' - ' + msgs.errMsg + ' Something went wrong, WP_CRON was not disabled!');
 			process.exit(1);
 		}
 		if (data.indexOf('DISABLE_WP_CRON') >= 0){
@@ -315,9 +315,9 @@ var styleOptions = {
 gulp.task('replacePackageNameStyle', ['clone_s'], function() {
 	replace(styleOptions, function(error, changes) {
 	  if (error) {
-	    console.error('Error occurred:', error);
+	    console.error('Error occurred:', error); // @TODO: fix message reporting
 	  }
-	  console.log('Modified files:', changes.join(', '));
+	  console.log('Modified files:', changes.join(', ')); // @TODO: fix message reporting
 	});
 });
 
@@ -346,9 +346,9 @@ var options = {
 gulp.task('replacePackageName', ['clone_s'], function() {
 	replace(options, function(error, changes) {
 	  if (error) {
-	    return console.error('Error occurred:', error);
+	    return console.error('Error occurred:', error); // @TODO: fix message reporting
 	  }
-	  console.log('Modified files:', changes.join(', '));
+	  console.log('Modified files:', changes.join(', ')); // @TODO: fix message reporting
 	});
 });
 
@@ -394,7 +394,7 @@ gulp.task('build', [
  */
 gulp.task('load-templates', function(){
 	if (!fs.existsSync(_environment.dev)) {
-		gutil.log(wpMissing);
+		gutil.log(msgs.wpMissing);
 		process.exit(1);
 	} else {
 		gulp.src(_templates.src)
@@ -567,7 +567,7 @@ Utility Tasks
 -------------------------------------------------------------------------------------------------- */
 var onError = function (err) {
 	gutil.beep();
-	gutil.log(wpFy + ' - ' + errorMsg + ' ' + err.toString());
+	gutil.log(msgs.Z2WPName + ' - ' + msgs.errMsg + ' ' + err.toString());
 	this.emit('end');
 };
 
@@ -575,17 +575,21 @@ var onError = function (err) {
 /* -------------------------------------------------------------------------------------------------
 Utility Variables
 -------------------------------------------------------------------------------------------------- */
-/**
- * @TODO: update/cleanup this stuff... push messages into an array or object
- */
 var date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
-var errorMsg = '\x1b[41mHey you!\x1b[0m';
-var projectReady = 'Your new WP project is ready. Start the workflow by running this command: $ \x1b[1mgulp\x1b[0m';
-var wpMissing = errorMsg + ' Wordpress must be installed first. Run: $ \x1b[1mnpm run install:wordpress\x1b[0m';
-var filesGenerated = 'Your ZIP template file was generated in: \x1b[1m' + __dirname + '/dist/' + _package.name + '.zip\x1b[0m - ✅';
-var pluginsGenerated = 'Plugins are generated in: \x1b[1m' + __dirname + '/dist/plugins/\x1b[0m - ✅';
-var backupsGenerated = 'Your backup was generated in: \x1b[1m' + __dirname + '/backups/' + date + '.zip\x1b[0m - ✅';
-var wpFy = '\x1b[1mZero2WP\x1b[0m';
-var wpFyUrl = '\x1b[2m - https://github.com/arnoldNuvisto/Zero2WP\x1b[0m';
-var thanks = 'Thank you for using ' + wpFy + wpFyUrl;
-
+/**
+ * @TODO: 
+ * > fix the dirname problem
+ * > update the URIs for distReady, pluginsReady & backupReady
+ * > 
+ */
+var msgs 	= {
+	errMsg 			: '\x1b[41mHey you!\x1b[0m',
+	wpReady 		: 'Your new WP project is ready. Start the workflow by running this command: $ \x1b[1mgulp build\x1b[0m',
+	wpMissing 		: msgs.errMsg + ' Wordpress must be installed first. Run: $ \x1b[1mnpm run install:wordpress\x1b[0m',
+	distReady 		: 'A ZIP archive of your theme is in: \x1b[1m' + __dirname + '/dist/' + _package.name + '.zip\x1b[0m - ✅',
+	pluginsReady 	: 'Plugins are in: \x1b[1m' + __dirname + '/dist/plugins/\x1b[0m - ✅',
+	backupReady 	: 'Your backup is in: \x1b[1m' + __dirname + '/backups/' + date + '.zip\x1b[0m - ✅',
+	Z2WPName 		: '\x1b[1mZero2WP\x1b[0m',
+	Z2WPUrl 		: '\x1b[2m - https://github.com/arnoldNuvisto/Zero2WP\x1b[0m',
+	thx 			: 'Thanks for using ' + msgs.Z2WPName + msgs.Z2WPUrl
+};
