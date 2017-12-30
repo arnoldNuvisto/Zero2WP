@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "cleanup": "gulp cleanup",
-    "dev": "gulp dev",
+    "build": "gulp build",
     "install:wordpress": "gulp install-wordpress",
     "install:underscores": "gulp install-underscores",
     "test": "echo \"Error: no test specified\" && exit 1"

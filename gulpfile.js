@@ -11,9 +11,14 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING HERE
-var projectName		= 'Marisa';
-var _environment	= {
-	server	: '127.0.0.1' // aka. 'localhost'
+var projectName		= 'Brenda';
+var server			= {
+	host		: '127.0.0.1', // aka. 'localhost' on most systems
+	customPort 	: null ,  // replace 'null' with a specific port instead of auto-detecting via Browsersync
+	//customPort 	: '6000',  // for example
+	open 		: 'external', // 
+	notify 		: true, // Set to false to hide Browsersync notices in the browser
+	inject 		: true // Set to false to force a page refresh instead of injecting changes
 };
 // STOP EDITING HERE
 
@@ -26,7 +31,6 @@ var _theme 			= {
 };
 
 var _environment	= {
-	proxy 	: _environment.server + '/Zero2WP/build/'  + _package.name + '/wordpress/',
 	dev 	: './build/' + _package.name + '/',
 	dist 	: './dist/' + _package.name + '/',
 	src 	: './themes/' + _package.name + '/'
@@ -70,6 +74,17 @@ var plugins 		= {
 	dest 	: _environment.dev + 'wordpress/wp-content/plugins/'
 };
 */
+
+var _server 		= {
+	proxy 			: server.host + '/Zero2WP/build/'  + _package.name + '/wordpress/',
+	open 			: 'external',	
+	notify 			: server.notify,
+	injectChanges	: server.inject
+};
+if (server.customPort !== null){
+	_server.port 	= server.customPort; 
+}
+
 var _style 			= {
 	src 	: _environment.src + 'sass/',
 	dest 	: _environment.dev + _theme.dest
@@ -211,8 +226,6 @@ gulp.task('unzip-wordpress', ['download-wordpress'], function (cb) {
  * 'on('end, ... )' instruction included here: without this instruction, the script would bork if 
  * it doesn't find a file; including the stmt forces closure.
  *
- * @TODO: use '.on(error, blah blah) ', then move the copy stuff to a discreet function (???)
- * ... might be useful with creating the config file
  */
 gulp.task('copy-config', ['unzip-wordpress'], function () {
 	gulp.src('wp-config.php')
@@ -353,20 +366,18 @@ gulp.task('install-underscores', ['clone_s', 'replacePackageNameStyle', 'replace
 /* -------------------------------------------------------------------------------------------------
  * Build Tasks
  * 
- * run "gulp"
+ * run "gulp build" or "npm run build"
  *
- * Adds/Updates the project's theme files in the dev directory:
- *
- *	1. 
+ * Adds/Updates the project's theme files in the project's build directory:
  *
  */
 /**
- * Task: 'dev'
+ * Task: 'build'
  *
- *	1. Runs all of the specified 'build tasks', in order
+ *	1. Runs all of the specified 'build tasks'
  *
  */
-gulp.task('dev', [
+gulp.task('build', [
 	'load-templates',
 	'load-includes',
 	'load-languages',
@@ -378,7 +389,7 @@ gulp.task('dev', [
 /**
  * Task: 'load-templates'
  *
- *	1. Loads the project's 'src' files and folders to the 'dev' theme directory
+ *	1. Loads the project's 'template' files and folders to the project build's theme directory
  *
  */
 gulp.task('load-templates', function(){
@@ -394,7 +405,7 @@ gulp.task('load-templates', function(){
 /**
  * Task: 'load-includes'
  *
- *	1. Loads the project's 'include' files to the 'dev' theme directory
+ *	1. Loads the project's 'include' files to the project build's theme directory
  *
  */
 gulp.task('load-includes', function(){
@@ -405,7 +416,7 @@ gulp.task('load-includes', function(){
 /**
  * Task: 'load-languages'
  *
- *	1. Loads the project's 'languages' files to the 'dev' theme directory
+ *	1. Loads the project's 'languages' files to the project build's theme directory
  *
  */
 gulp.task('load-languages', function(){
@@ -416,7 +427,7 @@ gulp.task('load-languages', function(){
 /**
  * Task: 'load-plugins'
  *
- *	1. Loads the project's 'plugins' to the 'dev' install directory
+ *	1. Loads the project's 'plugins' to the project build's install directory
  *
  */
 //gulp.task('load-plugins', function(){
@@ -428,7 +439,7 @@ gulp.task('load-languages', function(){
  * Task: 'load-assets'
  *
  *	1. Runs all of the 'build tasks' related to processing and copying the 
- *	the project's asset files to the 'dev' directory, in order
+ *	the project's asset files to the project build's directory
  *
  */
 gulp.task('load-assets', ['load-styles','load-_fonts','load-images','load-js']);
@@ -439,7 +450,7 @@ gulp.task('load-assets', ['load-styles','load-_fonts','load-images','load-js']);
  *	1. Compiles the project's SCSS files to CSS
  *	2. Adds browser prefixes as needed
  *	3. Creates and saves a sourcemap for the CSS
- *	4. Loads the finalized CSS file into the 'dev' build directory
+ *	4. Loads the finalized CSS file into the project's build directory
  *
  */
 var sassOpts = {
@@ -471,7 +482,7 @@ gulp.task('load-styles', function(){
 /**
  * Task: 'load-_fonts'
  *
- *	1. Loads the project's font files to the 'dev' directory
+ *	1. Loads the project's font files to the project build's theme directory
  *
  */
 gulp.task('load-_fonts', function(){
@@ -482,7 +493,7 @@ gulp.task('load-_fonts', function(){
 /**
  * Task: 'load-images'
  *
- *	1. Loads the project's image files to the 'dev' directory
+ *	1. Loads the project's image files to the project build's theme directory
  *
  */
 gulp.task('load-images', function(){
@@ -494,7 +505,7 @@ gulp.task('load-images', function(){
  * Task: 'load-js'
  *
  *	1. Pre-processes the project's JS files
- *	2. Loads the project's compiled JS files to the 'dev' directory
+ *	2. Loads the project's compiled JS files to the project build's theme directory
  *
  */
 gulp.task('load-js', function(){
@@ -523,13 +534,9 @@ gulp.task('compress-images', function() {
  *
  */
 gulp.task('watch', function(){
-	browserSync.init({
-		proxy: _environment.proxy,
-		//port: 7000, // Use a specific port (instead of the one auto-detected by Browsersync)
-		open: 'external',
-		//notify: false, // Don't show any notifications in the browser
-		//injectChanges: false // Don't try to inject, just do a page refresh
-	});
+
+	browserSync.init(_server);
+
 	gulp.watch(_style.src + '**/*', ['load-styles']); // stream changes
 	gulp.watch(_fonts.src + '**/*', ['load-_fonts', reload]);
 	gulp.watch(_img.src + '**', ['load-images']); // stream changes
@@ -538,6 +545,7 @@ gulp.task('watch', function(){
 	gulp.watch(_languages.src + '**/*', ['load-lang', reload]);
 	//gulp.watch(plugins.src + '**/*', ['load-plugins', reload]);
 	gulp.watch(_templates.src + '**/*', ['load-templates', reload]);
+	
 	gulp.watch(_environment.dev + 'wordpress/wp-config*.php', function(event){
 		if(event.type === 'added') { 
 			gulp.start('disable-cron');
@@ -548,7 +556,7 @@ gulp.task('watch', function(){
 /**
  * Task: 'default'
  *
- *	1. Launches the specified default tasks when the user runs the "gulp" or "gulp --verbose" command
+ *	1. Launches the 'watch' task when the user runs the "gulp" or "gulp --verbose" command
  *
  */
 gulp.task('default', ['watch']);
