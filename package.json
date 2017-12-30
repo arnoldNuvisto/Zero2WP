@@ -4,10 +4,10 @@
   "description": "\"A project to create a Wordpress theme development workflow\"",
   "main": "index.js",
   "scripts": {
-    "cleanup": "gulp cleanup",
     "build": "gulp build",
     "install:wordpress": "gulp install-wordpress",
     "install:underscores": "gulp install-underscores",
+    "build": "gulp build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -38,9 +38,7 @@
     "gulp-util": "^3.0.8",
     "postcss-assets": "^5.0.0",
     "postcss-cssnext": "^3.0.2",
-    "postcss-easy-import": "^3.0.0"
-  },
-  "dependencies": {
+    "postcss-easy-import": "^3.0.0",
     "replace-in-file": "^3.1.0"
   }
 }
