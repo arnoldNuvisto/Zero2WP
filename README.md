@@ -1,12 +1,23 @@
 # Zero2WP v0.0.1
-A build system for automating the WordPress development workflow.
+A workbench for automating the WordPress development workflow.
 
 ## NOTE: Zero2WP is still a work in progress
 
 ### Introduction
-Zero2WP is a comprehensive workflow for WordPress theme developers. Zero2WP uses Nodejs, Gulp, BrowserSync, and PhP's integrated web server to track changes and auto-reload one or more browsers. Several style pre-processors are built in, plus Zero2WP is ES6-ready.
+Zero2WP will be a robust workbench for WordPress theme developers. Zero2WP uses Nodejs, Gulp, BrowserSync, and PhP's integrated web server to track changes and instantly auto-reload your browsers. 
+
+### Some Features
+1) Run multiple projects simultaneously from the same workbench
+2) Install and setup the latest version of WordPress for each project
+3) Install and setup the latest version of Underscores for each project
+4) Instant build environment setup
+5) Instant browser refresh
+6) ... more coming
 
 # Changelog
+
+**v0.0.2**
+- WIP commit
 
 **v0.0.1**
 - Initial commit
