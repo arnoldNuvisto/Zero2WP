@@ -4,6 +4,6 @@ node_modules
 .sass-cache
 build/**
 dist/**
-components/**/fonts
-components/**/img
+themes/**/fonts
+themes/**/img
 package-lock.json
