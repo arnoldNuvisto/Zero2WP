@@ -1,4 +1,4 @@
-# Zero2WP v0.0.2
+# Zero2WP v0.0.
 A build system for automating the WordPress development workflow.
 
 ## NOTE: Zero2WP is still a work in progress
@@ -15,6 +15,9 @@ Zero2WP aims to be a robust build system for WordPress theme developers. Zero2WP
 6) ... more coming
 
 # Changelog
+
+**v0.0.3**
+- WIP commit
 
 **v0.0.2**
 - WIP commit

@@ -2,8 +2,7 @@
 node_modules
 .tmp
 .sass-cache
-build/**
+dev/**
 dist/**
-themes/**/fonts
-themes/**/img
+themes/**
 package-lock.json
