@@ -1,4 +1,4 @@
-# Zero2WP v0.0.
+# Zero2WP v0.0.3
 A build system for automating the WordPress development workflow.
 
 ## NOTE: Zero2WP is still a work in progress
