@@ -9,7 +9,7 @@
  * @task "gulp build"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.3
+ * @version 0.0.4
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -27,18 +27,20 @@ Load Plugins
 var contains		= require('gulp-contains');
 var git 			= require('gulp-git');
 var gulp 			= require('gulp');
-var gulpif 			= require('gulp-if'); // for later
+var gulpif 			= require('gulp-if');
 var gutil 			= require('gulp-util');
 var del 			= require('del');
 var fs 				= require('fs');
 var imagemin      	= require('gulp-imagemin');
 var inject 			= require('gulp-inject-string');
+var lineEndCorrect	= require('gulp-line-ending-corrector');
 var newer    		= require('gulp-newer');
 var notify	        = require('gulp-notify');
 var plumber 		= require('gulp-plumber');
 var remoteSrc 		= require('gulp-remote-src');
 var rename 			= require('gulp-rename');
 var replace 		= require('replace-in-file');
+var stripLine  		= require('gulp-strip-line');
 var unzip 			= require('gulp-unzip');
 
 // Browsersync related
@@ -60,7 +62,7 @@ var postcss 		= require('gulp-postcss');
 var sass 			= require('gulp-sass');
 var sourcemaps 		= require('gulp-sourcemaps');
 
-// move the following 2 into the next section
+// move the following 2 into the Project Constants section
 var pluginsDev 		= [
 	partialimport,
 	cssnext({
@@ -117,7 +119,12 @@ var _includes 		= {
 var _injectEnqueue 	= {
 	find 	: _package.name + '_scripts() {',
 	replace : '\n    wp_enqueue_script( \'' + _package.name + '-app\', get_template_directory_uri() . \'/js/app.js.min\', array(\'jquery\'), \'\', true );\n',
-	test 	: 'wp_enqueue_script( \'' + _package.name + '-app\''
+	test 	: 'wp_enqueue_script( \'' + _package.name + '-app\'',
+	strip	:
+		{
+			navScript		: '-navigation\'',
+			skipLinkScript 	: '-skip-link-focus-fix\''
+		}
 };
 
 var _js 			= {
@@ -194,7 +201,70 @@ var AUTOPREFIXER_BROWSERS = [
     'android >= 4',
     'bb >= 10'
   ];
+//--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Project Utilities
+-------------------------------------------------------------------------------------------------- */
+var _date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
 
+var _product = {
+	name 	: 'Zero2WP',
+	url 	: ' - https://github.com/arnoldNuvisto/Zero2WP'
+};
+
+var	_warning	= '\x1b[41mHey you!\x1b[0m';
+
+var _notices = {
+	buildMsgs			: {
+		load_templates	: 'Loaded template files to the dev folder for ' + _package.name,
+		load_includes	: 'Loaded include files to the dev folder for ' + _package.name,
+		load_languages	: 'Loaded language files to the dev folder for ' + _package.name,
+		load_plugins	: 'Loaded plugins to the dev folder for ' + _package.name,
+		load_styles		: 'Processed, compressed, and loaded css files to the dev folder for ' + _package.name,
+		load_fonts		: 'Loaded font files to the dev folder for ' + _package.name,
+		load_images		: 'Compressed and loaded new images files to the dev folder for ' + _package.name,
+		process_js		: 'Processed, compressed, and loaded js files to the dev folder for ' + _package.name,
+		update_funcs	: {
+			yes			: 'Updated and loaded the functions.php file to the dev folder for ' + _package.name,
+			no 			: 'The functions.php file for ' + _package.name + ' is already up to date',
+			missing 	: 'The functions.php file for ' + _package.name + ' could not be read'
+		},
+		disable_cron 	: {
+			yes			: 'WP_CRON has been disabled in the wp-config.php file for ' + _package.name,
+			no 			: 'WP_CRON was already disabled in the wp-config.php file for ' + _package.name,
+			missing 	: 'The wp-config.php file for ' + _package.name + ' could not be read'
+		}
+	},
+	tempInstMsgs		: {
+		clone_s			: 'The template has been cloned from Github for ' + _package.name,
+		pkg_name_style 	: 'The style files have been reset for ' + _package.name,
+		pkg_name_other 	: 'The package files have been reset for ' + _package.name
+	},
+	wpInstMsgs			: {
+		download 		: 'WP has been downloaded into the dev folder for ' + _package.name,
+		missing 		: _warning + 'Wordpress needs to be installed first',
+		ready 			: 'A new WP project is ready for ' + _package.name,
+		thx				: 'Thanks for using ' + _product.name + ' ' + _product.url,
+		unzip 			: 'WP has been unzipped into the dev folder for ' + _package.name
+	}
+};
+
+/**
+ * @var 'onError'
+ * 
+ * Defines the default error handler passed to 'plumber'
+ *
+ * See: https://scotch.io/tutorials/prevent-errors-from-crashing-gulp-watch
+ */
+var onError = function (err) {
+    notify.onError({
+        title: _product.name +  ' - ' + "Gulp error in " + err.plugin,
+        message:  err.toString()
+    })(err);
+	gutil.beep();
+	gutil.log(_product.name + ' - ' + _warning + ' ' + err.toString());
+	this.emit('end');
+};
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
  * Wordpress Installation
@@ -211,7 +281,6 @@ var AUTOPREFIXER_BROWSERS = [
  *	4. 'disable-cron': Ensures that 'cron' is disabled in the 'wp-config.php' file
  *
  */
-
 /**
  * Task: 'install-wordpress'
  *
@@ -251,7 +320,7 @@ gulp.task('download-wordpress', ['cleanup-dev'], function (cb) {
 	return remoteSrc( ['latest.zip'], { base: 'https://wordpress.org/' } )
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(gulp.dest(_environment.dev))
-    	.pipe( notify( { message: 'TASK: WP downloaded', onLast: true } ) );
+    	.pipe(notify({message: _notices.wpInstMsgs.download, title: _product.name, onLast: true }));
 });
 
 /**
@@ -266,7 +335,7 @@ gulp.task('unzip-wordpress', ['download-wordpress'], function (cb) {
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(unzip())
 		.pipe(gulp.dest(_environment.dev))
-    	.pipe( notify( { message: 'TASK: WP unzipped', onLast: true } ) );
+    	.pipe(notify({message: _notices.wpInstMsgs.unzip, title: _product.name, onLast: true }));
 });
 
 /**
@@ -285,8 +354,8 @@ gulp.task('copy-config', ['unzip-wordpress'], function () {
 		.pipe(gulp.dest(_environment.dev + 'wordpress'))
 		.on('end', function () {
 				gutil.beep();
-				gutil.log(_msgs.wpReady);
-				gutil.log(_msgs.thx);
+				gutil.log(_product.name + ' ' + _notices.wpInstMsgs.ready);
+				gutil.log(_product.name + ' ' + _notices.wpInstMsgs.thx);
 			});
 });
 
@@ -310,17 +379,21 @@ gulp.task('cleanup-install', ['unzip-wordpress'], function () {
 gulp.task('disable-cron', function () {
 	fs.readFile(_environment.dev + 'wordpress/wp-config.php', function (err, data) {
 		if (err) {
-			gutil.log(_product.name + ' - ' + _errMsg + ' Something went wrong, WP_CRON was not disabled!');
+			// @TODO: notify()
+			gutil.log(_product.name + ' - ' + _notices.buildMsgs.disable_cron.missing);
 			process.exit(1);
 		}
 		if (data.indexOf('DISABLE_WP_CRON') >= 0){
-			gutil.log('WP_CRON is already disabled!');
+			// @TODO: notify()
+			gutil.log(_product.name + ' - ' + _notices.buildMsgs.disable_cron.no);
 		} 
 		else {
+			// @TODO: notify()
 			gulp.src(_environment.dev + 'wordpress/wp-config.php')
 			.pipe(plumber({ errorHandler: onError }))
 			.pipe(inject.after('define(\'DB_COLLATE\', \'\');', '\ndefine(\'DISABLE_WP_CRON\', true);'))
-			.pipe(gulp.dest(_environment.dev + 'wordpress'));
+			.pipe(gulp.dest(_environment.dev + 'wordpress'))
+    		.pipe(notify({message: _notices.buildMsgs.disable_cron.yes, title: _product.name, onLast: true }));
 		}
 	});
 });
@@ -366,7 +439,6 @@ gulp.task('disable-cron', function () {
 		}
 	});
 */
-
 /**
  * @task: 'install-template'
  *
@@ -393,6 +465,7 @@ gulp.task('install-template', [
 gulp.task('clone_s', function(cb){
 	return git.clone('https://github.com/Automattic/_s.git', {args: _environment.src}, function (err) {
 		cb(err);
+		gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.clone_s);
 	});
 });
 
@@ -414,11 +487,13 @@ var styleOptions = {
   ]
 };
 gulp.task('replace-package-name-style', ['clone_s'], function() {
-	replace(styleOptions, function(error, changes) {
-	  if (error) {
-	    console.error('Error occurred:', error); // @TODO: fix message reporting
-	  }
-	  console.log('Modified files:', changes.join(', ')); // @TODO: fix message reporting
+	return replace(styleOptions, function(error, changes) {
+		if (error) {
+	    	console.error('Error occurred:', error); 
+	  	} else {
+			gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.pkg_name_style);
+	  		//console.log('Modified files:', changes.join(', ')); 
+		}
 	});
 });
 
@@ -445,11 +520,13 @@ var options = {
   ]
 };
 gulp.task('replace-package-name', ['clone_s'], function() {
-	replace(options, function(error, changes) {
-	  if (error) {
-	    return console.error('Error occurred:', error); // @TODO: fix message reporting
-	  }
-	  console.log('Modified files:', changes.join(', ')); // @TODO: fix message reporting
+	return replace(options, function(error, changes) {
+		if (error) {
+			console.error('Error occurred:', error); 
+	  	} else {
+			gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.pkg_name_other);
+		  	//console.log('Modified files:', changes.join(', ')); 
+	  	}
 	});
 });
 
@@ -497,12 +574,13 @@ gulp.task('build', [
  */
 gulp.task('load-templates', function(){
 	if (!fs.existsSync(_environment.dev)) {
-		gutil.log(_msgs.wpMissing);
+		gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.wpInstMsgs.missing);
 		process.exit(1);
 	} else {
-		gulp.src(_templates.src)
+		return gulp.src(_templates.src)
 			.pipe(plumber({ errorHandler: onError }))
-			.pipe(gulp.dest(_templates.dest));
+			.pipe(gulp.dest(_templates.dest))
+    		.pipe(notify({ message: _notices.buildMsgs.load_templates, title: _product.name, onLast: true}));
 	}
 });
 
@@ -513,9 +591,10 @@ gulp.task('load-templates', function(){
  *
  */
 gulp.task('load-includes', function(){
-	gulp.src(_includes.src + '**/*')
+	return gulp.src(_includes.src + '**/*')
 		.pipe(plumber({ errorHandler: onError }))
-		.pipe(gulp.dest(_includes.dest));
+		.pipe(gulp.dest(_includes.dest))
+   		.pipe(notify({message: _notices.buildMsgs.load_includes, title: _product.name, onLast: true}));
 });
 
 /**
@@ -525,9 +604,10 @@ gulp.task('load-includes', function(){
  *
  */
 gulp.task('load-languages', function(){
-	gulp.src(_languages.src + '**/*')
+	return gulp.src(_languages.src + '**/*')
 		.pipe(plumber({ errorHandler: onError }))
-		.pipe(gulp.dest(_languages.dest));
+		.pipe(gulp.dest(_languages.dest))
+    	.pipe(notify({ message: _notices.buildMsgs.load_languages, title: _product.name, onLast: true}));
 });
 /**
  * @TODO: Figure out a strategy for handling i18n & l10n
@@ -566,7 +646,8 @@ gulp.task('load-languages', function(){
 //gulp.task('load-plugins', function(){
 //	gulp.src(plugins.src + '**/*'//)
 //		.pipe(plumber({ errorHandler: onError }))
-//		.pipe(gulp.dest(plugins.dest));
+//		.pipe(gulp.dest(plugins.dest))
+//    	.pipe(notify({ message: _notices.buildMsgs.load_plugins, title: _product.name, onLast: true}));
 //});
 
 /**
@@ -608,8 +689,10 @@ gulp.task('load-styles', ['load-images'], function(){
 			cssnano()
 		]))
 		.pipe(sourcemaps.write('maps'))
+	    .pipe(lineEndCorrect())
 		.pipe(gulp.dest(_style.dest))
-		.pipe(browserSync.stream({ match: '**/*.css' }));
+		.pipe(browserSync.stream({ match: '**/*.css' }))
+    	.pipe(notify({message: _notices.buildMsgs.load_styles, title: _product.name, onLast: true}));
 });
 
 /**
@@ -619,9 +702,10 @@ gulp.task('load-styles', ['load-images'], function(){
  *
  */
 gulp.task('load-fonts', function(){
-	gulp.src(_fonts.src + '**/*')
+	return gulp.src(_fonts.src + '**/*')
 		.pipe(plumber({ errorHandler: onError }))
-		.pipe(gulp.dest(_fonts.dest));
+		.pipe(gulp.dest(_fonts.dest))
+    	.pipe(notify({ message: _notices.buildMsgs.load_fonts, title: _product.name, onLast: true}));
 });
 
 /**
@@ -631,12 +715,13 @@ gulp.task('load-fonts', function(){
  *
  */
 gulp.task('load-images', ['compress-images'], function(){
-	gulp.src([
+	return gulp.src([
       _img.src + '**/*',
       '!' + _img.src + '/**/raw/'
     ])
 		.pipe(plumber({ errorHandler: onError }))
-		.pipe(gulp.dest(_img.dest));
+		.pipe(gulp.dest(_img.dest))
+    	.pipe(notify({message: _notices.buildMsgs.load_images, title: _product.name, onLast: true}));
 });
 
 /**
@@ -672,7 +757,7 @@ gulp.task('compress-images', function() {
  *	1. Copies the project's JS files to the project build's theme directory
  *
  */
-gulp.task('load-js', ['process-js', 'update-functions-file']);
+gulp.task('load-js', ['process-js', 'update-funcs']);
 
 /**
  * @task: 'process-js'
@@ -688,7 +773,9 @@ gulp.task('process-js', function() {
 	    .pipe(concat('app.js'))
 	    .pipe(rename({suffix: '.min'}))
 	    .pipe(uglify())
-	    .pipe(gulp.dest(_js.dest));
+	    .pipe(lineEndCorrect())
+	    .pipe(gulp.dest(_js.dest))
+    	.pipe(notify({message: _notices.buildMsgs.process_js, title: _product.name, onLast: true}));
 });
 
 /**
@@ -697,22 +784,24 @@ gulp.task('process-js', function() {
  *	1. @TODO
  *
  */
-gulp.task('update-functions-file', function () {
+gulp.task('update-funcs', function () {
 	fs.readFile(_environment.src + 'functions.php', function (err, data) {
 		if (err) {
-			gutil.log(_product.name + ' - ' + _errMsg + ' Something went wrong, functions.php could not be read!');
+			return gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.buildMsgs.update_funcs.missing);
 		}
 		if (data.indexOf(_injectEnqueue.test) >= 0) {
-			gutil.log('functions.php is already up to date');
+			return gutil.log(_product.name + ' - ' + _notices.buildMsgs.update_funcs.no);
 		} 
 		else {
-			gulp.src([_environment.src + 'functions.php'])
+			return gulp.src([_environment.src + 'functions.php'])
 			.pipe(plumber({ errorHandler: onError }))
 			.pipe(inject.after(_injectEnqueue.find, _injectEnqueue.replace ))
+			.pipe(stripLine([_injectEnqueue.strip.navScript, 'use strict']))
+			.pipe(stripLine([_injectEnqueue.strip.skipLinkScript, 'use strict']))
 		    .pipe(gulp.dest(_environment.src))
-		    .pipe(gulp.dest(_environment.dev + _theme.dest));
+		    .pipe(gulp.dest(_environment.dev + _theme.dest))
+	    	.pipe(notify({message: _notices.buildMsgs.update_funcs.yes, title: _product.name, onLast: true}));
 		}
-		return;
 	});
 });
 
@@ -758,51 +847,8 @@ Distribution Tasks
 /**
  * @TODO: 
  */
-//--------------------------------------------------------------------------------------------------
-/* -------------------------------------------------------------------------------------------------
-Utility Tasks
--------------------------------------------------------------------------------------------------- */
-/**
- * @var 'onError'
- * 
- * Defines the default error handler passed to 'plumber'
- *
- * See: https://scotch.io/tutorials/prevent-errors-from-crashing-gulp-watch
- */
-var onError = function (err) {
-
-    notify.onError({
-        title: _product.name +  ' - ' + "Gulp error in " + err.plugin,
-        message:  err.toString()
-    })(err);
-
-	gutil.beep();
-	gutil.log(_product.name + ' - ' + _errMsg + ' ' + err.toString());
-	this.emit('end');
-};
 
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Utility Variables
 -------------------------------------------------------------------------------------------------- */
-var date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
-/**
- * @TODO: 
- * > fix the dirname problem
- * > update the URIs for distReady, pluginsReady & backupReady
- * > 
- */
-var	_errMsg 	= '\x1b[41mHey you!\x1b[0m';
-
-var _product = {
-	name 	: '\x1b[1mZero2WP\x1b[0m',
-	url 	: '\x1b[2m - https://github.com/arnoldNuvisto/Zero2WP\x1b[0m'
-};
-var _msgs 	= {
-	wpReady 		: 'Your new WP project is ready. Start the workflow by running this command: $ \x1b[1mgulp build\x1b[0m',
-	wpMissing 		: _errMsg + ' Wordpress must be installed first. Run: $ \x1b[1mnpm run install:wordpress\x1b[0m',
-	distReady 		: 'A ZIP archive of your theme is in: \x1b[1m' + __dirname + '/dist/' + _package.name + '.zip\x1b[0m - ✅',
-	pluginsReady 	: 'Plugins are in: \x1b[1m' + __dirname + '/dist/plugins/\x1b[0m - ✅',
-	backupReady 	: 'Your backup is in: \x1b[1m' + __dirname + '/backups/' + date + '.zip\x1b[0m - ✅',
-	thx 			: 'Thanks for using ' + _product.name + ' ' + _product.url
-};
