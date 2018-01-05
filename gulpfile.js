@@ -16,9 +16,7 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-var projectName			= 'testRun';
-var projectDeveloper	= 'Arnold Wytenburg <arnold@arnoldwytenburg.com';
-var projectTranslator	= 'Arnold Wytenburg <arnold@arnoldwytenburg.com';
+var projectName		= 'testRun';
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -30,6 +28,7 @@ var gulp 			= require('gulp');
 var gulpif 			= require('gulp-if');
 var gutil 			= require('gulp-util');
 var del 			= require('del');
+var deporder 		= require('gulp-deporder');
 var fs 				= require('fs');
 var imagemin      	= require('gulp-imagemin');
 var inject 			= require('gulp-inject-string');
@@ -48,8 +47,10 @@ var browserSync  	= require('browser-sync');
 var reload       	= browserSync.reload;
 
 // Javascript related
+var babel 			= require('gulp-babel');
 var concat 			= require('gulp-concat');
 var jshint 			= require('gulp-jshint');
+var stripDebug 		= require('gulp-strip-debug');
 var uglify 			= require('gulp-uglify');
 
 // Style related
@@ -83,6 +84,9 @@ var pluginsProd 	= [
 /* -------------------------------------------------------------------------------------------------
 Project Constants
 -------------------------------------------------------------------------------------------------- */
+// See: https://www.andreasnorman.com/how-to-keep-your-gulp-configuration-options-in-a-json-file/
+var _appConfig 		= JSON.parse(fs.readFileSync('./config/app-config.json'));
+
 var _package 		= {
 	name 	: projectName.toLowerCase()
 };
@@ -90,10 +94,6 @@ var _package 		= {
 var _theme 			= {
 	dest 	: 'wordpress/wp-content/themes/' + _package.name + '/'
 };
-
-// See: https://www.andreasnorman.com/how-to-keep-your-gulp-configuration-options-in-a-json-file/
-var _serverConfig 	= 
-	JSON.parse(fs.readFileSync('./config/server-config.json'));
 
 var _environment	= {
 	dev 	: './dev/' + _package.name + '/',
@@ -158,13 +158,13 @@ var _sassOpts = {
 };
 
 var _server 		= {
-	proxy 			: _serverConfig.host + '/Zero2WP/dev/'  + _package.name + '/wordpress/',
+	proxy 			: _appConfig.server.host + '/Zero2WP/dev/'  + _package.name + '/wordpress/',
 	open 			: 'external', 
-	notify 			: _serverConfig.notify,
-	injectChanges	: _serverConfig.inject
+	notify 			: _appConfig.server.notify,
+	injectChanges	: _appConfig.server.inject
 };
-if (_serverConfig.customPort !== null){
-	_server.port 	= _serverConfig.customPort; 
+if (_appConfig.server.customPort !== null){
+	_server.port 	= _appConfig.server.customPort; 
 }
 
 var _style 			= {
@@ -181,9 +181,9 @@ var _translation 	= {
 	domain        	: _package.name,
 	destFile      	: _package.name + '.pot',
 	package       	: _package.name,
-	bugReport     	: projectDeveloper,
-	lastTranslator	: projectTranslator,
-	team          	: projectDeveloper,
+	bugReport     	: _appConfig.developer.name + '<' + _appConfig.developer.email + '>',
+	lastTranslator	: _appConfig.translator.name + '<' + _appConfig.translator.email + '>',
+	team          	: _appConfig.developer.name + '<' + _appConfig.developer.email + '>',
 	targetFiles		: _environment.src + '**/*.php'
 };
 
@@ -205,16 +205,16 @@ var AUTOPREFIXER_BROWSERS = [
 /* -------------------------------------------------------------------------------------------------
 Project Utilities
 -------------------------------------------------------------------------------------------------- */
-var _date = new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
+var _date 				= new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
 
-var _product = {
+var _product 			= {
 	name 	: 'Zero2WP',
 	url 	: ' - https://github.com/arnoldNuvisto/Zero2WP'
 };
 
-var	_warning	= '\x1b[41mHey you!\x1b[0m';
+var	_warning			= '\x1b[41mHey you!\x1b[0m';
 
-var _notices = {
+var _notices 			= {
 	buildMsgs			: {
 		load_templates	: 'Loaded template files to the dev folder for ' + _package.name,
 		load_includes	: 'Loaded include files to the dev folder for ' + _package.name,
@@ -256,7 +256,7 @@ var _notices = {
  *
  * See: https://scotch.io/tutorials/prevent-errors-from-crashing-gulp-watch
  */
-var onError = function (err) {
+var onError 			= function (err) {
     notify.onError({
         title: _product.name +  ' - ' + "Gulp error in " + err.plugin,
         message:  err.toString()
@@ -770,10 +770,16 @@ gulp.task('process-js', function() {
 		.pipe(plumber({ errorHandler: onError }))
 	    .pipe(jshint(_jshintOpts))
 	    .pipe(jshint.reporter('default'))
+		.pipe(sourcemaps.init())
+		.pipe(babel({
+            presets: ['env']
+        }))
+	    .pipe(deporder())
 	    .pipe(concat('app.js'))
 	    .pipe(rename({suffix: '.min'}))
 	    .pipe(uglify())
 	    .pipe(lineEndCorrect())
+		.pipe(sourcemaps.write('maps'))
 	    .pipe(gulp.dest(_js.dest))
     	.pipe(notify({message: _notices.buildMsgs.process_js, title: _product.name, onLast: true}));
 });
@@ -846,9 +852,19 @@ Distribution Tasks
 -------------------------------------------------------------------------------------------------- */
 /**
  * @TODO: 
+ * > https://www.npmjs.com/package/gulp-strip-debug/
+ * > https://www.npmjs.com/package/gulp-gzip
  */
 
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
-Utility Variables
+Translation Tasks
+-------------------------------------------------------------------------------------------------- */
+/**
+ * @TODO: 
+ */
+
+//--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Backup Tasks
 -------------------------------------------------------------------------------------------------- */

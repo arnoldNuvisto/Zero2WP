@@ -16,7 +16,7 @@ Zero2WP aims to be a robust build system for WordPress theme developers. Zero2WP
 7. Compresses PNG, JPEG, GIF & SVG images
 8. Detects and automatically processes changes in project files
 9. Instantly reloads the browser on changes in project files
-10. ... more in the works (dist, backup, i18n/l10n, custom templates, etc)
+10. ... more in the works (dist, backup, i18n/l10n, custom templates, RTL, A11y, etc)
 
 # Changelog
 

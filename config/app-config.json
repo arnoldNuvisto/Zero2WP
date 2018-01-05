@@ -1,0 +1,17 @@
+{
+	"server" 		: {
+		"host"		: "127.0.0.1",
+		"customPort": null ,
+		"open"		: "external",
+		"notify"	: true,
+		"inject"	: true 
+	},
+	"developer"		: {
+		"name" 		: "Arnold Wytenburg",
+		"email"		: "arnold@arnoldwytenburg.com"
+	},
+	"translator"	: {
+		"name" 		: "Arnold Wytenburg",
+		"email"		: "arnold@arnoldwytenburg.com"
+	}
+}
