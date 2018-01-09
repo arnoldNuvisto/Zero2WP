@@ -47,7 +47,6 @@ var browserSync  	= require('browser-sync');
 var reload       	= browserSync.reload;
 
 // Javascript related
-//var babel 			= require('gulp-babel');
 var concat 			= require('gulp-concat');
 var jshint 			= require('gulp-jshint');
 var stripDebug 		= require('gulp-strip-debug');
@@ -62,24 +61,6 @@ var partialimport 	= require('postcss-easy-import');
 var postcss 		= require('gulp-postcss');
 var sass 			= require('gulp-sass');
 var sourcemaps 		= require('gulp-sourcemaps');
-
-// move the following 2 into the Project Constants section
-var pluginsDev 		= [
-	partialimport,
-	cssnext({
-		features: {
-			colorHexAlpha: false
-		}
-	})
-];
-var pluginsProd 	= [
-	partialimport,
-	cssnext({
-		features: {
-			colorHexAlpha: false
-		}
-	})
-];
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Project Constants
@@ -142,16 +123,47 @@ var _languages 		= {
 	src  	: _environment.src + 'languages/',
 	dest 	: _environment.dev + _theme.dest + 'languages/'
 };
+
+var _pkgRenameOpts = {
+  files: _environment.src + '**/*',
+  ignore: _environment.src + '*.css',
+  from: [
+  	/\b_s-/g, 
+  	/\b _s/g, 
+  	/\b_s_/g, 
+  	/\b_s/g
+  ],
+  to: [
+  	_package.name + '-', 
+  	' ' + _package.name, 
+  	_package.name + '_',
+  	_package.name
+  ]
+};
+
+var _pkgRenameStyleOpts = {
+  files: [_environment.src + '*.css', _environment.src + '**/*.scss'],
+  from: [
+  	/Theme Name: _s/g,
+  	/Text Domain: _s/g
+  ],
+  to: [
+  	'Theme Name: ' + _package.name, 
+  	'Text Domain: ' + _package.name
+  ]
+};
+
 /*
 var plugins 		= {
 	src 	: _environment.src + 'plugins/', 
 	dest 	: _environment.dev + 'wordpress/wp-content/plugins/'
 };
 */
+
 var _sassOpts = {
     outputStyle     : 'nested', // (nested | expanded | compact | compressed)
     imagePath       : _img.dest,
-    precision       : 3,
+    precision       : 10,
     errLogToConsole : true,
 	indentType		: 'tab', // (space | tab)
 	indentWidth		: '1' // (maximum value: 10)
@@ -188,7 +200,7 @@ var _translation 	= {
 };
 
 // See https://github.com/ai/browserslist
-var TARGET_BROWSERS = [
+var _target_browsers = [
     'last 2 version',
     '> 1%',
     'ie >= 9',
@@ -472,19 +484,8 @@ gulp.task('clone_s', function(cb){
  *	1. Replaces '_s' with the packageName in the project's '.css' and '.scss' files
  *
  */
-var styleOptions = {
-  files: [_environment.src + '*.css', _environment.src + '**/*.scss'],
-  from: [
-  	/Theme Name: _s/g,
-  	/Text Domain: _s/g
-  ],
-  to: [
-  	'Theme Name: ' + _package.name, 
-  	'Text Domain: ' + _package.name
-  ]
-};
 gulp.task('replace-package-name-style', ['clone_s'], function() {
-	return replace(styleOptions, function(error, changes) {
+	return replace(_pkgRenameStyleOpts, function(error, changes) {
 		if (error) {
 	    	console.error('Error occurred:', error); 
 	  	} else {
@@ -500,24 +501,8 @@ gulp.task('replace-package-name-style', ['clone_s'], function() {
  *	1. Replaces '_s' with the packageName in the project's remaining files
  *
  */
-var options = {
-  files: _environment.src + '**/*',
-  ignore: _environment.src + '*.css',
-  from: [
-  	/\b_s-/g, 
-  	/\b _s/g, 
-  	/\b_s_/g, 
-  	/\b_s/g
-  ],
-  to: [
-  	_package.name + '-', 
-  	' ' + _package.name, 
-  	_package.name + '_',
-  	_package.name
-  ]
-};
 gulp.task('replace-package-name', ['clone_s'], function() {
-	return replace(options, function(error, changes) {
+	return replace(_pkgRenameOpts, function(error, changes) {
 		if (error) {
 			console.error('Error occurred:', error); 
 	  	} else {
@@ -667,8 +652,11 @@ gulp.task('load-assets', [
  *
  *	1. Compiles the project's SCSS files to CSS
  *	2. Adds browser prefixes as needed
- *	3. Creates a sourcemap file for the preprocesssed CSS
- *	4. Loads the finalized CSS file into the project's build directory
+ *	3. Creates and saves a sourcemap within the css file to assist with debugging
+ * 	4. Corrects line endings as needed
+ * 	5. Loads the finalized CSS file into the project's build directory
+ * 	6. Streams changes to the browser
+ * 	7. Posts a notice to confirm that css processing is complete
  *
  */
 gulp.task('load-styles', ['load-images'], function(){
@@ -682,10 +670,9 @@ gulp.task('load-styles', ['load-images'], function(){
       			basePath: _environment.dev,
       			baseUrl: _theme.dest
       		}),
-			autoprefixer(TARGET_BROWSERS),
-			cssnano()
+			autoprefixer(_target_browsers)
 		]))
-		.pipe(sourcemaps.write('maps'))
+		.pipe(sourcemaps.write())
 	    .pipe(lineEndCorrect())
 		.pipe(gulp.dest(_style.dest))
 		.pipe(browserSync.stream({ match: '**/*.css' }))
@@ -733,7 +720,7 @@ gulp.task('load-images', ['compress-images'], function(){
 gulp.task('compress-images', function() {
   return gulp.src(_img.src + 'raw/**/*.{png,jpg,gif,svg}')
 	.pipe(plumber({ errorHandler: onError }))
-    .pipe(newer(_img.src)) // this may be a problem... will this include the contents of /raw?
+    .pipe(newer(_img.src)) // @TODO: this may be a problem... will this include the contents of /raw?
     .pipe(imagemin([
 	    imagemin.gifsicle({interlaced: true}),
 	    imagemin.jpegtran({progressive: true}),
@@ -765,16 +752,17 @@ gulp.task('load-js', ['process-js', 'update-funcs']);
  *	1. @TODO
  *
  */
+/**
+ * @TODO: create separate flows for each of 'vendor' and 'theme' sub-folders
+ *
+ * Make sure also to allow for header vs. footer positioning 
+ */
 gulp.task('process-js', function() {
 	return gulp.src([_js.src + '**/*.js'])
 		.pipe(plumber({ errorHandler: onError }))
 	    .pipe(jshint(_jshintOpts))
 	    .pipe(jshint.reporter('default'))
-		.pipe(sourcemaps.init())
-		/*.pipe(babel({
-            presets		: ['env'],
-            browsers 	: [TARGET_BROWSERS]
-        }))*/
+		.pipe(sourcemaps.init()) // @TODO: Make sure this is needed - I think uglify does this automagically
 	    .pipe(deporder())
 	    .pipe(concat('app.js'))
 	    .pipe(rename({suffix: '.min'}))
@@ -855,6 +843,7 @@ Distribution Tasks
  * @TODO: 
  * > https://www.npmjs.com/package/gulp-strip-debug/
  * > https://www.npmjs.com/package/gulp-gzip
+ * > do not include sourcemaps in css or js
  */
 
 //--------------------------------------------------------------------------------------------------
@@ -864,8 +853,3 @@ Translation Tasks
 /**
  * @TODO: 
  */
-
-//--------------------------------------------------------------------------------------------------
-/* -------------------------------------------------------------------------------------------------
-Backup Tasks
--------------------------------------------------------------------------------------------------- */
