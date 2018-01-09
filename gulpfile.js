@@ -47,7 +47,7 @@ var browserSync  	= require('browser-sync');
 var reload       	= browserSync.reload;
 
 // Javascript related
-var babel 			= require('gulp-babel');
+//var babel 			= require('gulp-babel');
 var concat 			= require('gulp-concat');
 var jshint 			= require('gulp-jshint');
 var stripDebug 		= require('gulp-strip-debug');
@@ -188,7 +188,7 @@ var _translation 	= {
 };
 
 // See https://github.com/ai/browserslist
-var AUTOPREFIXER_BROWSERS = [
+var TARGET_BROWSERS = [
     'last 2 version',
     '> 1%',
     'ie >= 9',
@@ -379,16 +379,13 @@ gulp.task('cleanup-install', ['unzip-wordpress'], function () {
 gulp.task('disable-cron', function () {
 	fs.readFile(_environment.dev + 'wordpress/wp-config.php', function (err, data) {
 		if (err) {
-			// @TODO: notify()
 			gutil.log(_product.name + ' - ' + _notices.buildMsgs.disable_cron.missing);
 			process.exit(1);
 		}
 		if (data.indexOf('DISABLE_WP_CRON') >= 0){
-			// @TODO: notify()
 			gutil.log(_product.name + ' - ' + _notices.buildMsgs.disable_cron.no);
 		} 
 		else {
-			// @TODO: notify()
 			gulp.src(_environment.dev + 'wordpress/wp-config.php')
 			.pipe(plumber({ errorHandler: onError }))
 			.pipe(inject.after('define(\'DB_COLLATE\', \'\');', '\ndefine(\'DISABLE_WP_CRON\', true);'))
@@ -685,7 +682,7 @@ gulp.task('load-styles', ['load-images'], function(){
       			basePath: _environment.dev,
       			baseUrl: _theme.dest
       		}),
-			autoprefixer(AUTOPREFIXER_BROWSERS),
+			autoprefixer(TARGET_BROWSERS),
 			cssnano()
 		]))
 		.pipe(sourcemaps.write('maps'))
@@ -757,6 +754,9 @@ gulp.task('compress-images', function() {
  *	1. Copies the project's JS files to the project build's theme directory
  *
  */
+/**
+ * @TODO: modify to allow for 'vendor' and 'theme' sub-folders
+ */
 gulp.task('load-js', ['process-js', 'update-funcs']);
 
 /**
@@ -771,9 +771,10 @@ gulp.task('process-js', function() {
 	    .pipe(jshint(_jshintOpts))
 	    .pipe(jshint.reporter('default'))
 		.pipe(sourcemaps.init())
-		.pipe(babel({
-            presets: ['env']
-        }))
+		/*.pipe(babel({
+            presets		: ['env'],
+            browsers 	: [TARGET_BROWSERS]
+        }))*/
 	    .pipe(deporder())
 	    .pipe(concat('app.js'))
 	    .pipe(rename({suffix: '.min'}))
