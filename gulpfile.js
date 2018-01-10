@@ -283,21 +283,26 @@ var onError 			= function (err) {
  * 
  * run "gulp install-wordpress"
  *
- * Installs a fresh copy of wordpress into the project's dev directory:
+ * Installs a fresh copy of the Wordpress source files into a project-specific dev subfolder
  *
- *	1. 'cleanup-dev': Removes any previous 'dev' and 'dist' directories for the project
- *	2. 'download-wordpress': Retrieves the most recent version of Wordpress
- *	3. 'setup-wordpress': Installs Wordpress into the project folder
- *		3.1 'unzip-wordpress': Unzips the Wordpress zip file into the project's build folder
- *		3.2 'copy-config': Copies an optional default 'wp-config.php' file
- *	4. 'disable-cron': Ensures that 'cron' is disabled in the 'wp-config.php' file
+ * Tasks:
+ * - install-wordpress (the main task runner)
+ * - cleanup-dev
+ * - download-wordpress
+ * - unzip-wordpress
+ * - copy-config
+ * - cleanup-install
+ * - disable-cron
  *
  */
 /**
- * Task: 'install-wordpress'
+ * @task: 'install-wordpress'
  *
- *	1. Runs a task to unzip the downloaded file
- *	2. Runs a task to copy over a default 'wp-config.php' file, if one exists
+ *	1. Removes any remaining folders and files from previous installs for this project
+ * 	2. Downloads a fresh Wordpress zip file from Wordpress.org
+ * 	3. Unzips the downloaded file and installs it to the project's dev directory
+ *	2. Copies over a default 'wp-config.php' file, if one exists
+ * 	3. Deletes the downloaded zip file
  *
  */
 gulp.task('install-wordpress', [
@@ -339,7 +344,7 @@ gulp.task('download-wordpress', ['cleanup-dev'], function (cb) {
  * @task: 'unzip-wordpress'.
  *
  *	1. Unzips the downloaded file
- *	2. Places the unzipped Wordpress files into the 'dev' folder
+ *	2. Places the unzipped Wordpress files into the project's dev' folder
  *
  */
 gulp.task('unzip-wordpress', ['download-wordpress'], function (cb) {
@@ -413,12 +418,13 @@ gulp.task('disable-cron', function () {
  * 
  * run "gulp install-template"
  *
- * Installs a fresh copy of the '_s' template source files into a project-specific subfolder:
+ * Installs a fresh copy of the '_s' template source files into a project-specific theme subfolder
  *
- *	1) Clone the '_s' repo
- *	2) Update the packageName in the style files
- *	3) Update the packageName in the remaining files
- *	4) Rename the template's language transaltion file
+ * - install-template (the main task runner)
+ * - clone_s
+ * - replace-package-name-style
+ * - replace-package-name
+ * - cleanup-template-files
  *
  */
 /**
@@ -451,10 +457,9 @@ gulp.task('disable-cron', function () {
 /**
  * @task: 'install-template'
  *
- *	1. Runs a task to clone the underscores template from GitHub
- *	2. Runs a task to update the template name in the .css and .scss files
- *	3. Runs a task to update the template name in the remaining files
- *	4. Runs tasks to rename the '_s.pot' file
+ *	1. Clones the underscores template from GitHub
+ *	2. Updates the template name in the .css and .scss files
+ *	3. Updates the template name in the remaining files
  *
  */
 gulp.task('install-template', [
@@ -468,7 +473,7 @@ gulp.task('install-template', [
 /**
  * @task: 'clone_s'
  *
- *	1. Clone the '_s' template into Zero2WP's 'themes' folder using the packageName 
+ *	1. Clones the '_s' template into a project-specific theme subfolder 
  *
  */
 gulp.task('clone_s', function(cb){
@@ -516,7 +521,6 @@ gulp.task('replace-package-name', ['clone_s'], function() {
  * @task: 'cleanup-template-files'
  *
  *	1. Removes the legacy '.github' folder from the template
- *	2. Removes the legacy '_s.pot' file from the template's languages folder
  *
  */
 gulp.task('cleanup-template-files', ['clone_s'], function () {
@@ -531,6 +535,22 @@ gulp.task('cleanup-template-files', ['clone_s'], function () {
  * run "gulp" after initial build
  *
  * Adds/Updates the project's theme files in the project's dev directory:
+ * 
+ * Tasks:
+ * - build (the main task runner)
+ * - load-templates
+ * - load-includes
+ * - load-languages
+ * - load-assets (a sub-task runner)
+ * - load-styles
+ * - load-fonts
+ * - load-images
+ * - compress-images
+ * - load-js (a sub-task runner)
+ * - process-js
+ * - update-funcs
+ * - default (s sub-task runner)
+ * - watch
  *
  */
 /**
@@ -543,7 +563,6 @@ gulp.task('build', [
 	'load-templates',
 	'load-includes',
 	'load-languages',
-	//'load-plugins',
 	'load-assets',
 	'watch'
 ]);
@@ -551,7 +570,7 @@ gulp.task('build', [
 /**
  * @task: 'load-templates'
  *
- *	1. Loads the project's 'template' files and folders to the project build's theme directory
+ *	1. Loads the project's template/theme files and folders to the project's dev directory
  *
  */
 gulp.task('load-templates', function(){
@@ -569,7 +588,7 @@ gulp.task('load-templates', function(){
 /**
  * @task: 'load-includes'
  *
- *	1. Loads the project's 'include' files to the project build's theme directory
+ *	1. Loads the project's include files and folders to the project's dev directory
  *
  */
 gulp.task('load-includes', function(){
@@ -582,7 +601,7 @@ gulp.task('load-includes', function(){
 /**
  * @task: 'load-languages'
  *
- *	1. Loads the project's 'languages' files to the project build's theme directory
+ *	1. Loads the project's languages files and folders to the project's dev directory
  *
  */
 gulp.task('load-languages', function(){
@@ -682,7 +701,7 @@ gulp.task('load-styles', ['load-images'], function(){
 /**
  * @task: 'load-fonts'
  *
- *	1. Loads the project's font files to the project build's theme directory
+ *	1. Loads the project's font files and folders to the project's dev directory
  *
  */
 gulp.task('load-fonts', function(){
@@ -695,7 +714,7 @@ gulp.task('load-fonts', function(){
 /**
  * @task: 'load-images'
  *
- *	1. Loads the project's compressed image files to the project build's theme directory
+ *	1. Loads the project's compressed image files and folders to the project's dev directory
  *
  */
 gulp.task('load-images', ['compress-images'], function(){
@@ -749,7 +768,13 @@ gulp.task('load-js', ['process-js', 'update-funcs']);
 /**
  * @task: 'process-js'
  *
- *	1. @TODO
+ *	1. Runs JSHint to look for errors, reports these and halts the run when found
+ * 	2. Order the JS source files in dependency prder
+ * 	3. Contact the JS files into a single file
+ * 	4. Minify the resulting file
+ * 	5. Write a sourcemap to the file
+ *	6. Correct line endings for non-unix systems
+ *	7. Save the final file into the project's dev folder
  *
  */
 /**
@@ -762,13 +787,13 @@ gulp.task('process-js', function() {
 		.pipe(plumber({ errorHandler: onError }))
 	    .pipe(jshint(_jshintOpts))
 	    .pipe(jshint.reporter('default'))
-		.pipe(sourcemaps.init()) // @TODO: Make sure this is needed - I think uglify does this automagically
+		.pipe(sourcemaps.init())
 	    .pipe(deporder())
 	    .pipe(concat('app.js'))
 	    .pipe(rename({suffix: '.min'}))
 	    .pipe(uglify())
-	    .pipe(lineEndCorrect())
 		.pipe(sourcemaps.write('maps'))
+	    .pipe(lineEndCorrect())
 	    .pipe(gulp.dest(_js.dest))
     	.pipe(notify({message: _notices.buildMsgs.process_js, title: _product.name, onLast: true}));
 });
@@ -776,7 +801,11 @@ gulp.task('process-js', function() {
 /**
  * @task: 'update-functions-file'
  *
- *	1. @TODO
+ *	1. Tests the function file to see if it already enqueues the processed JS file
+ * 	2. If not already up to date:
+ * 		2.1 Injects code to enqueue the new JS file
+ * 		2.2 Removes code that enqueues the original unprocessed JS files
+ * 		2.3 Saves the updated functions.php file to the project's dev and theme folders
  *
  */
 gulp.task('update-funcs', function () {
@@ -804,11 +833,10 @@ gulp.task('update-funcs', function () {
  * @task: 'watch'
  *
  *	1. Initiate Browsersync
- *	2. Watch for file changes and run appropriate tasks
+ *	2. Watch for file changes and run appropriate build tasks
  *
  */
 gulp.task('watch', function(){
-
 	browserSync.init(_server);
 
 	gulp.watch(_style.src + '**/*', ['load-styles']);
