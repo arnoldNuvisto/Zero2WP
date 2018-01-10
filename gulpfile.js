@@ -873,7 +873,7 @@ gulp.task('watch', function(){
 	gulp.watch(_js.src + '**/*', ['load-js', reload]);
 	gulp.watch(_languages.src + '**/*', ['load-lang', reload]);
 	//gulp.watch(plugins.src + '**/*', ['load-plugins', reload]);
-	gulp.watch(_templates.src + '**/*', ['load-templates', reload]);
+	gulp.watch(_templates.src, ['load-templates', reload]);
 	
 	gulp.watch(_environment.dev + 'wordpress/wp-config*.php', function(event){
 		if(event.type === 'added') { 
