@@ -1,6 +1,6 @@
 {
   "name": "Zero2WP",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "\"A project to create a Wordpress theme development workflow\"",
   "main": "index.js",
   "scripts": {

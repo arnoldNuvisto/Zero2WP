@@ -9,7 +9,7 @@
  * @task "gulp build"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.4
+ * @version 0.0.5
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ var _includes 		= {
 
 var _injectEnqueue 	= {
 	find 	: _package.name + '_scripts() {',
-	replace : '\n    wp_enqueue_script( \'' + _package.name + '-app\', get_template_directory_uri() . \'/js/app.js.min\', array(\'jquery\'), \'\', true );\n',
+	replace : '\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js.min\', array(\'jquery\'), \'\', false );\n\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js.min\', array(\'jquery\'), \'\', true );\n',
 	test 	: 'wp_enqueue_script( \'' + _package.name + '-app\'',
 	strip	:
 		{
@@ -124,7 +124,7 @@ var _languages 		= {
 	dest 	: _environment.dev + _theme.dest + 'languages/'
 };
 
-var _pkgRenameOpts = {
+var _pkgRenameOpts 	= {
   files: _environment.src + '**/*',
   ignore: _environment.src + '*.css',
   from: [
@@ -160,7 +160,7 @@ var plugins 		= {
 };
 */
 
-var _sassOpts = {
+var _sassOpts 		= {
     outputStyle     : 'nested', // (nested | expanded | compact | compressed)
     imagePath       : _img.dest,
     precision       : 10,
@@ -232,10 +232,11 @@ var _notices 			= {
 		load_includes	: 'Loaded include files to the dev folder for ' + _package.name,
 		load_languages	: 'Loaded language files to the dev folder for ' + _package.name,
 		load_plugins	: 'Loaded plugins to the dev folder for ' + _package.name,
-		load_styles		: 'Processed, compressed, and loaded css files to the dev folder for ' + _package.name,
+		load_styles		: 'Processed, compressed, and loaded CSS files to the dev folder for ' + _package.name,
 		load_fonts		: 'Loaded font files to the dev folder for ' + _package.name,
 		load_images		: 'Compressed and loaded new images files to the dev folder for ' + _package.name,
-		process_js		: 'Processed, compressed, and loaded js files to the dev folder for ' + _package.name,
+		process_head_js	: 'Processed, compressed, and loaded header JS files to the dev folder for ' + _package.name,
+		process_foot_js	: 'Processed, compressed, and loaded footer JS files to the dev folder for ' + _package.name,
 		update_funcs	: {
 			yes			: 'Updated and loaded the functions.php file to the dev folder for ' + _package.name,
 			no 			: 'The functions.php file for ' + _package.name + ' is already up to date',
@@ -763,13 +764,44 @@ gulp.task('compress-images', function() {
 /**
  * @TODO: modify to allow for 'vendor' and 'theme' sub-folders
  */
-gulp.task('load-js', ['process-js', 'update-funcs']);
+gulp.task('load-js', ['process-header-js', 'process-footer-js', 'update-funcs']);
 
 /**
- * @task: 'process-js'
+ * @task: 'process-header-js'
+ *
+ * This task looks for anything included in 'themes/<project-name>/js/header'. Normally, these
+ * will be vendor files, so source hinting is not performed
+ * 
+ * 	1. Order the JS source files in dependency order
+ * 	2. Contact the JS files into a single file
+ * 	3. Minify the resulting file
+ * 	4. Write a sourcemap to the file
+ *	5. Correct line endings for non-unix systems
+ *	6. Save the final file into the project's dev folder
+ *
+ */
+gulp.task('process-header-js', function() {
+	return gulp.src([_js.src + 'header/**/*.js'])
+		.pipe(plumber({ errorHandler: onError }))
+		.pipe(sourcemaps.init())
+	    .pipe(deporder())
+	    .pipe(concat(_package.name + '-header.js'))
+	    .pipe(rename({suffix: '.min'}))
+	    .pipe(uglify())
+		.pipe(sourcemaps.write())
+	    .pipe(lineEndCorrect())
+	    .pipe(gulp.dest(_js.dest))
+    	.pipe(notify({message: _notices.buildMsgs.process_head_js, title: _product.name, onLast: true}));
+});
+
+/**
+ * @task: 'process-footer-js'
+ *
+ * This task looks for anything included in 'themes/<project-name>/js/'. Normally, these
+ * will be custom files, so source hinting is performed
  *
  *	1. Runs JSHint to look for errors, reports these and halts the run when found
- * 	2. Order the JS source files in dependency prder
+ * 	2. Order the JS source files in dependency order
  * 	3. Contact the JS files into a single file
  * 	4. Minify the resulting file
  * 	5. Write a sourcemap to the file
@@ -777,25 +809,20 @@ gulp.task('load-js', ['process-js', 'update-funcs']);
  *	7. Save the final file into the project's dev folder
  *
  */
-/**
- * @TODO: create separate flows for each of 'vendor' and 'theme' sub-folders
- *
- * Make sure also to allow for header vs. footer positioning 
- */
-gulp.task('process-js', function() {
-	return gulp.src([_js.src + '**/*.js'])
+gulp.task('process-footer-js', function() {
+	return gulp.src([_js.src + '*.js'])
 		.pipe(plumber({ errorHandler: onError }))
 	    .pipe(jshint(_jshintOpts))
 	    .pipe(jshint.reporter('default'))
 		.pipe(sourcemaps.init())
 	    .pipe(deporder())
-	    .pipe(concat('app.js'))
+	    .pipe(concat(_package.name + '-footer.js'))
 	    .pipe(rename({suffix: '.min'}))
 	    .pipe(uglify())
-		.pipe(sourcemaps.write('maps'))
+		.pipe(sourcemaps.write())
 	    .pipe(lineEndCorrect())
 	    .pipe(gulp.dest(_js.dest))
-    	.pipe(notify({message: _notices.buildMsgs.process_js, title: _product.name, onLast: true}));
+    	.pipe(notify({message: _notices.buildMsgs.process_foot_js, title: _product.name, onLast: true}));
 });
 
 /**
