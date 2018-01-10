@@ -78,7 +78,7 @@ Next, install a fresh copy of wordpress into the project's dev directory. Still 
 ```
 gulp install-wordpress
 ```
-- this will create a new folder for your project in **'Zero2WP/dev/'**, and then install a fresh copy of Wordpress.
+- This will create a new folder for your project in **'Zero2WP/dev/'**, and then install a fresh copy of Wordpress.
 
 ### 2.3 Install Underscores
 
@@ -88,7 +88,7 @@ With Wordpress now in place, install a fresh copy of the **Underscores** templat
 gulp install-template
 ```
 
-- this will clone the latest version of Underscores from GitHub and install it into a new folder for your theme in **'Zero2WP/themes/'** 
+- This will clone the latest version of Underscores from GitHub and install it into a new folder for your theme in **'Zero2WP/themes/'** 
 
 
 ### 2.4 Run the Build
@@ -98,11 +98,9 @@ Next, push the project's theme files into the project's dev directory, and launc
 ```
 gulp build
 ```
-- this will push the project's theme files into the themes directory of the project's Wordpress install, launch a PHP server, and then open Wordpress in your browser.
+- This will push the project's theme files into the themes directory of the project's Wordpress install, launch a PHP server, and then open Wordpress in your browser.
 
-**Important**
-
-- when you run **'gulp build'**, Zero2WP also activates a 'watch' task that listens for changes to project files in **'Zero2Wp/themes/'**, and automatically updates both the dev folder as well as the browser whenever a change is detected.
+- **Important:** when you run **'gulp build'**, Zero2WP also activates a 'watch' task that listens for changes to project files in **'Zero2Wp/themes/'**, and automatically updates both the dev folder as well as the browser whenever a change is detected.
 
 ### 2.5 Activate Wordpress
 
@@ -119,7 +117,7 @@ The solution is simple. Just run this one-word command and you're good to go:
 ```
 gulp
 ```
-- this launches the previously-mentioned 'watch' task, which automatically sets up a new server session for you.
+- This launches the previously-mentioned 'watch' task, which automatically sets up a new server session for you.
 
 Note that you could also just run 'gulp build' again. However this will force upload of the entire set of theme files, which is slower and less efficient. Best to stick with just 'gulp'.
 
