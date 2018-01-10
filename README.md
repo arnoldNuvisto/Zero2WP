@@ -69,7 +69,7 @@ var projectName		= '<your project's name goes here>;
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 ```
-- This var will tell Zero2WP the name to use for naming the project's build, dev, and dist directories, as well as for customizing the default theme.
+- This var will tell Zero2WP the name to use for naming the project's directories and files, as well as for customizing the default theme.
 
 ### 2.2 Install WordPress
 
@@ -125,7 +125,7 @@ Note that you could also just run 'gulp build' again. However this will force up
 
 ## 4. Package a Project
 
-When you're finished with a project, you can use Zero2WP to create a distribution package. 
+When you're finished with a project, you can use Zero2WP to create a production-ready distribution package. 
 
 NOTE: This part of Zero2WP has not been written yet - coming soon.
 
