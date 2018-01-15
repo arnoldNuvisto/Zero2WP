@@ -16,7 +16,8 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-var projectName		= 'testRun';
+var projectName		= 'bootRun';
+var useBootstrap	= true; // 'false | true'
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -57,6 +58,7 @@ var assets 			= require('postcss-assets');
 var autoprefixer 	= require('autoprefixer');
 var cssnano 		= require('cssnano');
 var cssnext 		= require('postcss-cssnext');
+var less 			= require('gulp-less');
 var partialimport 	= require('postcss-easy-import');
 var postcss 		= require('gulp-postcss');
 var sass 			= require('gulp-sass');
@@ -65,15 +67,28 @@ var sourcemaps 		= require('gulp-sourcemaps');
 /* -------------------------------------------------------------------------------------------------
 Project Constants
 -------------------------------------------------------------------------------------------------- */
-// See: https://www.andreasnorman.com/how-to-keep-your-gulp-configuration-options-in-a-json-file/
 var _appConfig 		= JSON.parse(fs.readFileSync('./config/app-config.json'));
 
 var _package 		= {
 	name 	: projectName.toLowerCase()
 };
 
+var _templateSrc 	= {
+	uScores : 'https://github.com/Automattic/_s.git',
+	bStrap 	: 'https://github.com/arnoldNuvisto/wp_bootstrap.git'
+};
+
+var _templateName 	= {
+	uScores : '_s',
+	bStrap 	: 'wp_bootstrap'
+};
+
+if (useBootstrap) {
+	var _twbsSrc	= 'node_modules/bootstrap/';
+}
+
 var _theme 			= {
-	dest 	: 'wordpress/wp-content/themes/' + _package.name + '/'
+	dest 	: 'wordpress/wp-content/themes/' + _package.name + '/' 
 };
 
 var _environment	= {
@@ -83,7 +98,7 @@ var _environment	= {
 };
 
 var _fonts 			= {
-	src 	: _environment.src + 'fonts/',
+	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'fonts/' : 'fonts/'),
 	dest 	: _environment.dev + _theme.dest + 'fonts/'
 };
 
@@ -97,6 +112,9 @@ var _includes 		= {
 	dest 	: _environment.dev + _theme.dest + 'inc/'
 };
 
+/**
+ * @TODO: if (useBootstrap) ... 
+ */
 var _injectEnqueue 	= {
 	find 	: _package.name + '_scripts() {',
 	replace : '\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js.min\', array(\'jquery\'), \'\', false );\n\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js.min\', array(\'jquery\'), \'\', true );\n',
@@ -108,7 +126,12 @@ var _injectEnqueue 	= {
 		}
 };
 
+/**
+ * @TODO: This won't work... there will always be a few scripts in the theme_root/js folder
+ * In short, if we're using Bootstrap, we ALSO want to process the stuff in twbsSrc
+ */
 var _js 			= {
+//	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'js/' : 'js/'),
 	src 	: _environment.src + 'js/',
 	dest 	: _environment.dev + _theme.dest + 'js/'
 };
@@ -125,15 +148,15 @@ var _languages 		= {
 };
 
 var _pkgRenameOpts 	= {
-  files: _environment.src + '**/*',
-  ignore: _environment.src + '*.css',
-  from: [
-  	/\b_s-/g, 
-  	/\b _s/g, 
-  	/\b_s_/g, 
-  	/\b_s/g
-  ],
-  to: [
+  files 	: _environment.src + '**/*',
+  ignore 	: _environment.src + '*.css',
+  from 		: [
+	new RegExp("\\b" + (useBootstrap ?  _templateName.bStrap : _templateName.uScores) + "-", "g"),
+	new RegExp("\\b " + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
+	new RegExp("\\b" + (useBootstrap ?  _templateName.bStrap : _templateName.uScores) + "_", "g"),
+	new RegExp("\\b" + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
+	],
+  to 		: [
   	_package.name + '-', 
   	' ' + _package.name, 
   	_package.name + '_',
@@ -141,13 +164,18 @@ var _pkgRenameOpts 	= {
   ]
 };
 
+if (useBootstrap) {
+	var _targetFiles = [_environment.src + '*.css'];
+} else {
+	var _targetFiles = [_environment.src + '*.css', _environment.src + '**/*.scss'];
+}
 var _pkgRenameStyleOpts = {
-  files: [_environment.src + '*.css', _environment.src + '**/*.scss'],
-  from: [
-  	/Theme Name: _s/g,
-  	/Text Domain: _s/g
+  files 	: _targetFiles,
+  from 		: [
+	new RegExp("Theme Name: " + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
+	new RegExp("Text Domain: " + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
   ],
-  to: [
+  to 		: [
   	'Theme Name: ' + _package.name, 
   	'Text Domain: ' + _package.name
   ]
@@ -160,6 +188,35 @@ var plugins 		= {
 };
 */
 
+/**
+ * @TODO: consider adding postcss-assets to the style build
+ * see: https://github.com/borodean/postcss-assets
+ */
+/**
+	Legend: Option,	Description, Default
+	> basePath, Root directory of the project, "."
+	> baseUrl, URL of the project when running the web server, "/"
+	> cachebuster, If cache should be busted: Pass a function to define custom busting strategy, "false"
+	> loadPaths, Specific directories in which to look for the files, "[]"
+	> relative, Directory to relate to when resolving URLs: When true, relates to the input file; When false, disables relative URLs, "false"
+	> cache, When true, if the input file not been modifed, use the results before cached, "false"
+*/
+/**
+	var _postcssAssetsOps 	= {
+		basePath 		: _environment.dev, // the directory where PostCSS Assets is executed... all URLs and load paths are relative to this
+	    baseUrl 		: _theme.dest, // the directory from which the server runs the project
+	    cachebuster 	: true,
+		loadPaths 		: [
+			_img.src,
+			_fonts.src
+		]
+	};
+	gulp.task('list', function() {
+		gutil.log('loadPaths: ' + _postcssAssetsOps.loadPaths + ' Specific directories in which to look for asset files');
+		gutil.log('basePath: ' + _postcssAssetsOps.basePath + ' Root directory of the project');
+		gutil.log('baseUrl: ' + _postcssAssetsOps.baseUrl + ' URL of the project when running the web server');
+	});
+*/
 var _sassOpts 		= {
     outputStyle     : 'nested', // (nested | expanded | compact | compressed)
     imagePath       : _img.dest,
@@ -180,11 +237,18 @@ if (_appConfig.server.customPort !== null){
 }
 
 var _style 			= {
-	src 	: _environment.src + 'sass/',
+	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'less/' : 'sass/'),
 	dest 	: _environment.dev + _theme.dest
 };
+if (useBootstrap) {
+	_style.compileReqs 		= '_bootstrap.less';
+}
 
-var _templates 		= {
+var _template 		= {
+	src 	: (useBootstrap ? _templateSrc.bStrap : _templateSrc.uScores)
+};
+
+var _themeFiles 	= {
 	src 	: _environment.src + '**/*.{php,css,png}',
 	dest 	: _environment.dev + _theme.dest 
 };
@@ -228,7 +292,7 @@ var	_warning			= '\x1b[41mHey you!\x1b[0m';
 
 var _notices 			= {
 	buildMsgs			: {
-		load_templates	: 'Loaded template files to the dev folder for ' + _package.name,
+		load_themeFiles	: 'Loaded theme files to the dev folder for ' + _package.name,
 		load_includes	: 'Loaded include files to the dev folder for ' + _package.name,
 		load_languages	: 'Loaded language files to the dev folder for ' + _package.name,
 		load_plugins	: 'Loaded plugins to the dev folder for ' + _package.name,
@@ -478,7 +542,7 @@ gulp.task('install-template', [
  *
  */
 gulp.task('clone_s', function(cb){
-	return git.clone('https://github.com/Automattic/_s.git', {args: _environment.src}, function (err) {
+	return git.clone(_template.src, {args: _environment.src}, function (err) {
 		cb(err);
 		gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.clone_s);
 	});
@@ -539,7 +603,7 @@ gulp.task('cleanup-template-files', ['clone_s'], function () {
  * 
  * Tasks:
  * - build (the main task runner)
- * - load-templates
+ * - load-themeFiles
  * - load-includes
  * - load-languages
  * - load-assets (a sub-task runner)
@@ -561,7 +625,7 @@ gulp.task('cleanup-template-files', ['clone_s'], function () {
  *
  */
 gulp.task('build', [
-	'load-templates',
+	'load-themeFiles',
 	'load-includes',
 	'load-languages',
 	'load-assets',
@@ -569,20 +633,20 @@ gulp.task('build', [
 ]);
 
 /**
- * @task: 'load-templates'
+ * @task: 'load-themeFiles'
  *
  *	1. Loads the project's template/theme files and folders to the project's dev directory
  *
  */
-gulp.task('load-templates', function(){
+gulp.task('load-themeFiles', function(){
 	if (!fs.existsSync(_environment.dev)) {
 		gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.wpInstMsgs.missing);
 		process.exit(1);
 	} else {
-		return gulp.src(_templates.src)
+		return gulp.src(_themeFiles.src)
 			.pipe(plumber({ errorHandler: onError }))
-			.pipe(gulp.dest(_templates.dest))
-    		.pipe(notify({ message: _notices.buildMsgs.load_templates, title: _product.name, onLast: true}));
+			.pipe(gulp.dest(_themeFiles.dest))
+    		.pipe(notify({ message: _notices.buildMsgs.load_themeFiles, title: _product.name, onLast: true}));
 	}
 });
 
@@ -679,17 +743,25 @@ gulp.task('load-assets', [
  * 	7. Posts a notice to confirm that css processing is complete
  *
  */
+/**
+ * See: https://www.sitepoint.com/postcss-mythbusting/
+ * @TODO: look into adding: https://github.com/SlexAxton/css-colorguard
+ * @TODO: look into adding: https://stylelint.io/
+ * @TODO: look into adding: https://github.com/borodean/postcss-assets
+ * ... 	
+	assets({
+		loadPaths: _postcssAssetsOps.loadPaths,
+			basePath: _postcssAssetsOps.basePath,
+			baseUrl: _postcssAssetsOps.baseUrl
+	}),
+ *
+ */
 gulp.task('load-styles', ['load-images'], function(){
-	return gulp.src(_style.src + '{style.scss,rtl.scss}')
+	return gulp.src(_style.src + (useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(sourcemaps.init())
-		.pipe(sass(_sassOpts).on('error', sass.logError))
+		.pipe( ( useBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
 		.pipe(postcss([
-			assets({
-				loadPaths: [_img.src],
-      			basePath: _environment.dev,
-      			baseUrl: _theme.dest
-      		}),
 			autoprefixer(_target_browsers)
 		]))
 		.pipe(sourcemaps.write())
@@ -761,9 +833,6 @@ gulp.task('compress-images', function() {
  *	1. Copies the project's JS files to the project build's theme directory
  *
  */
-/**
- * @TODO: modify to allow for 'vendor' and 'theme' sub-folders
- */
 gulp.task('load-js', ['process-header-js', 'process-footer-js', 'update-funcs']);
 
 /**
@@ -779,6 +848,12 @@ gulp.task('load-js', ['process-header-js', 'process-footer-js', 'update-funcs'])
  *	5. Correct line endings for non-unix systems
  *	6. Save the final file into the project's dev folder
  *
+ */
+/**
+ * @TODO: lots of work needed to handle BOTH theme & Bootstrap JS
+ * ... consider compiling the bootstrap stuff into a common file 
+ * when installing the template? 
+ * 
  */
 gulp.task('process-header-js', function() {
 	return gulp.src([_js.src + 'header/**/*.js'])
@@ -835,6 +910,9 @@ gulp.task('process-footer-js', function() {
  * 		2.3 Saves the updated functions.php file to the project's dev and theme folders
  *
  */
+/**
+ * @TODO: if (useBootstrap) ... 
+ */
 gulp.task('update-funcs', function () {
 	fs.readFile(_environment.src + 'functions.php', function (err, data) {
 		if (err) {
@@ -863,7 +941,7 @@ gulp.task('update-funcs', function () {
  *	2. Watch for file changes and run appropriate build tasks
  *
  */
-gulp.task('watch', function(){
+gulp.task('watch', function(){ 
 	browserSync.init(_server);
 
 	gulp.watch(_style.src + '**/*', ['load-styles']);
@@ -873,7 +951,7 @@ gulp.task('watch', function(){
 	gulp.watch(_js.src + '**/*', ['load-js', reload]);
 	gulp.watch(_languages.src + '**/*', ['load-lang', reload]);
 	//gulp.watch(plugins.src + '**/*', ['load-plugins', reload]);
-	gulp.watch(_templates.src, ['load-templates', reload]);
+	gulp.watch(_themeFiles.src, ['load-themeFiles', reload]);
 	
 	gulp.watch(_environment.dev + 'wordpress/wp-config*.php', function(event){
 		if(event.type === 'added') { 
