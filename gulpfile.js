@@ -16,8 +16,10 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-var projectName		= 'bootRun';
-var useBootstrap	= true; // 'false | true'
+//var projectName		= 'bootRun';
+//var useBootstrap	= true; // 'false | true'
+var projectName		= 'testRun';
+var useBootstrap	= false; // 'false | true'
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -112,13 +114,16 @@ var _includes 		= {
 	dest 	: _environment.dev + _theme.dest + 'inc/'
 };
 
-/**
- * @TODO: if (useBootstrap) ... 
- */
+var _jsEnqueues		= {
+	vendorLibs 	: '\n    wp_enqueue_script( \'' + _package.name + '-vendor\', get_template_directory_uri() . \'/js/' + _package.name + '-vendor.js\', array(\'jquery\'), \'\', false );',
+	header 		: '\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js\', array(\'jquery\'), \'\', false );',
+	footer 		: '\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js\', array(\'jquery\'), \'\', true );'
+};
+
 var _injectEnqueue 	= {
 	find 	: _package.name + '_scripts() {',
-	replace : '\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js.min\', array(\'jquery\'), \'\', false );\n\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js.min\', array(\'jquery\'), \'\', true );\n',
-	test 	: 'wp_enqueue_script( \'' + _package.name + '-app\'',
+	replace : _jsEnqueues.vendorLibs + _jsEnqueues.header + _jsEnqueues.footer,
+	test 	: 'wp_enqueue_script( \'' + _package.name + '-header\'',
 	strip	:
 		{
 			navScript		: '-navigation\'',
@@ -127,8 +132,7 @@ var _injectEnqueue 	= {
 };
 
 /**
- * @TODO: This won't work... there will always be a few scripts in the theme_root/js folder
- * In short, if we're using Bootstrap, we ALSO want to process the stuff in twbsSrc
+ * @TODO: if we're using Bootstrap, we ALSO want to process the stuff in twbsSrc
  */
 var _js 			= {
 //	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'js/' : 'js/'),
@@ -299,8 +303,9 @@ var _notices 			= {
 		load_styles		: 'Processed, compressed, and loaded CSS files to the dev folder for ' + _package.name,
 		load_fonts		: 'Loaded font files to the dev folder for ' + _package.name,
 		load_images		: 'Compressed and loaded new images files to the dev folder for ' + _package.name,
-		process_head_js	: 'Processed, compressed, and loaded header JS files to the dev folder for ' + _package.name,
-		process_foot_js	: 'Processed, compressed, and loaded footer JS files to the dev folder for ' + _package.name,
+		process_head_js	: 'Processed, compressed, and loaded custom header JS files to the dev folder for ' + _package.name,
+		process_foot_js	: 'Processed, compressed, and loaded custom footer JS files to the dev folder for ' + _package.name,
+		process_libs_js	: 'Processed, compressed, and loaded vendor JS libraries to the dev folder for ' + _package.name,
 		update_funcs	: {
 			yes			: 'Updated and loaded the functions.php file to the dev folder for ' + _package.name,
 			no 			: 'The functions.php file for ' + _package.name + ' is already up to date',
@@ -675,33 +680,6 @@ gulp.task('load-languages', function(){
 		.pipe(gulp.dest(_languages.dest))
     	.pipe(notify({ message: _notices.buildMsgs.load_languages, title: _product.name, onLast: true}));
 });
-/**
- * @TODO: Figure out a strategy for handling i18n & l10n
- */
-/**
- * WP POT Translation File Generator:
- *
- *     1. Gets the source of all the PHP files
- *     2. Sort files in stream by path or any custom sort comparator
- *     3. Applies wpPot with the variable set at the top of this file
- *     4. Generate a .pot file of i18n that can be used for l10n to build .mo file
- *
- */
-/*
- gulp.task( 'translate', function () {
-     return gulp.src( _translation.targetFiles )
-         .pipe(sort())
-         .pipe(wpPot( {
-             domain        : _translation.domain,
-             destFile      : _translation.destFile,
-             package       : _translation.package,
-             bugReport     : _translation.bugReport,
-             lastTranslator: _translation.lastTranslator,
-             team          : _translation.team
-         } ))
-        .pipe(gulp.dest(_languages.src));
- });
-*/
 
 /**
  * @task: 'load-plugins'
@@ -745,9 +723,9 @@ gulp.task('load-assets', [
  */
 /**
  * See: https://www.sitepoint.com/postcss-mythbusting/
- * @TODO: look into adding: https://github.com/SlexAxton/css-colorguard
- * @TODO: look into adding: https://stylelint.io/
- * @TODO: look into adding: https://github.com/borodean/postcss-assets
+ * : look into adding: https://github.com/SlexAxton/css-colorguard
+ * : look into adding: https://stylelint.io/
+ * : look into adding: https://github.com/borodean/postcss-assets
  * ... 	
 	assets({
 		loadPaths: _postcssAssetsOps.loadPaths,
@@ -833,36 +811,31 @@ gulp.task('compress-images', function() {
  *	1. Copies the project's JS files to the project build's theme directory
  *
  */
-gulp.task('load-js', ['process-header-js', 'process-footer-js', 'update-funcs']);
+gulp.task('load-js', ['load-vendor-libs-js', 'load-custom-js', 'update-funcs']);
+
+gulp.task('load-custom-js', ['process-header-js', 'process-footer-js']);
 
 /**
  * @task: 'process-header-js'
  *
- * This task looks for anything included in 'themes/<project-name>/js/header'. Normally, these
- * will be vendor files, so source hinting is not performed
+ * This task processes 'themes/<project-name>/js/*.js'. Normally, these
+ * will be custom files, so source hinting is performed
  * 
  * 	1. Order the JS source files in dependency order
- * 	2. Contact the JS files into a single file
- * 	3. Minify the resulting file
- * 	4. Write a sourcemap to the file
- *	5. Correct line endings for non-unix systems
- *	6. Save the final file into the project's dev folder
+ * 	2. Concat these into a single file
+ * 	3. Write a sourcemap to the file
+ *	4. Correct line endings for non-unix systems
+ *	5. Save the final file into the project's dev folder
  *
  */
-/**
- * @TODO: lots of work needed to handle BOTH theme & Bootstrap JS
- * ... consider compiling the bootstrap stuff into a common file 
- * when installing the template? 
- * 
- */
 gulp.task('process-header-js', function() {
-	return gulp.src([_js.src + 'header/**/*.js'])
+	return gulp.src([_js.src + '*.js'])
 		.pipe(plumber({ errorHandler: onError }))
+	    .pipe(jshint(_jshintOpts))
+	    .pipe(jshint.reporter('default'))
 		.pipe(sourcemaps.init())
 	    .pipe(deporder())
 	    .pipe(concat(_package.name + '-header.js'))
-	    .pipe(rename({suffix: '.min'}))
-	    .pipe(uglify())
 		.pipe(sourcemaps.write())
 	    .pipe(lineEndCorrect())
 	    .pipe(gulp.dest(_js.dest))
@@ -872,7 +845,7 @@ gulp.task('process-header-js', function() {
 /**
  * @task: 'process-footer-js'
  *
- * This task looks for anything included in 'themes/<project-name>/js/'. Normally, these
+ * This task processes 'themes/<project-name>/js/footer/*.js'. Normally, these
  * will be custom files, so source hinting is performed
  *
  *	1. Runs JSHint to look for errors, reports these and halts the run when found
@@ -885,15 +858,13 @@ gulp.task('process-header-js', function() {
  *
  */
 gulp.task('process-footer-js', function() {
-	return gulp.src([_js.src + '*.js'])
+	return gulp.src([_js.src + 'footer/*.js'])
 		.pipe(plumber({ errorHandler: onError }))
 	    .pipe(jshint(_jshintOpts))
 	    .pipe(jshint.reporter('default'))
 		.pipe(sourcemaps.init())
 	    .pipe(deporder())
 	    .pipe(concat(_package.name + '-footer.js'))
-	    .pipe(rename({suffix: '.min'}))
-	    .pipe(uglify())
 		.pipe(sourcemaps.write())
 	    .pipe(lineEndCorrect())
 	    .pipe(gulp.dest(_js.dest))
@@ -901,19 +872,52 @@ gulp.task('process-footer-js', function() {
 });
 
 /**
- * @task: 'update-functions-file'
+ * @task: 'load-vendor-libs-js'
  *
- *	1. Tests the function file to see if it already enqueues the processed JS file
- * 	2. If not already up to date:
- * 		2.1 Injects code to enqueue the new JS file
- * 		2.2 Removes code that enqueues the original unprocessed JS files
- * 		2.3 Saves the updated functions.php file to the project's dev and theme folders
+ * This task processes 'themes/<project-name>/js/vendor/**' + ' /*.js'. 
+ * 
+ * 	1. Check to see if there any new or updated vendor JS files
+ * 	2. If so, uglify any files that are not already minified
+ * 	3. Rename these files to include the '.min' extension
+ *	4. Concat all files into a single file
+ * 	5. Correct line endings for non-unix systems
+ *	6. Save the final file into the project's dev folder
+ *
+ * Note:  newer() passes through all files if any one file in src
+ * has been modified more recently than the concatenated dest file
  *
  */
 /**
- * @TODO: if (useBootstrap) ... 
+ * @TODO: if(useBootstrap) bootstrap files also need to be included
  */
-gulp.task('update-funcs', function () {
+gulp.task('load-vendor-libs-js', function() {
+	return gulp.src([_js.src + 'vendor/**/*.js'])
+		.pipe(plumber({ errorHandler: onError }))
+	    .pipe(newer(_js.dest + _package.name + '-vendor.js'))
+        .pipe(gulpif(["*.js", "!*.min.js"],
+            uglify()
+        ))
+        .pipe(gulpif(["*.js", "!*.min.js"],
+            rename({suffix: ".min"})
+		))
+	    .pipe(concat(_package.name + '-vendor.js'))
+	    .pipe(lineEndCorrect())
+	    .pipe(gulp.dest(_js.dest))
+    	.pipe(notify({message: _notices.buildMsgs.process_libs_js, title: _product.name, onLast: true}));
+});
+
+/**
+ * @task: 'update-functions-file'
+ *
+ *	1. Tests the function file to see if it already enqueues the processed JS files
+ * 	2. If not already up to date:
+ * 		2.1 Injects code to enqueue the new JS files
+ * 		2.2 Removes any default code leftover from the initial template install which enqueues unused JS files
+ * 		2.3 Saves the updated functions.php file to the project's dev and theme folders
+ *
+ */
+
+gulp.task('update-funcs', ['load-custom-js', 'load-vendor-libs-js'], function () {
 	fs.readFile(_environment.src + 'functions.php', function (err, data) {
 		if (err) {
 			return gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.buildMsgs.update_funcs.missing);
@@ -984,5 +988,29 @@ Distribution Tasks
 Translation Tasks
 -------------------------------------------------------------------------------------------------- */
 /**
- * @TODO: 
+ * @TODO: Figure out a strategy for handling i18n & l10n
  */
+/**
+ * WP POT Translation File Generator:
+ *
+ *     1. Gets the source of all the PHP files
+ *     2. Sort files in stream by path or any custom sort comparator
+ *     3. Applies wpPot with the variable set at the top of this file
+ *     4. Generate a .pot file of i18n that can be used for l10n to build .mo file
+ *
+ */
+/*
+ gulp.task( 'translate', function () {
+     return gulp.src( _translation.targetFiles )
+         .pipe(sort())
+         .pipe(wpPot( {
+             domain        : _translation.domain,
+             destFile      : _translation.destFile,
+             package       : _translation.package,
+             bugReport     : _translation.bugReport,
+             lastTranslator: _translation.lastTranslator,
+             team          : _translation.team
+         } ))
+        .pipe(gulp.dest(_languages.src));
+ });
+*/
