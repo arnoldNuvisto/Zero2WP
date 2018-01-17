@@ -9,31 +9,30 @@
  * @task "gulp build"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.5
+ * @version 0.0.6
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-//var projectName		= 'bootRun';
-//var useBootstrap	= true; // 'false | true'
-var projectName		= 'testRun';
-var useBootstrap	= false; // 'false | true'
+var projectName		= 'bootRun';
+var useWpBootstrap	= true; // 'false | true'
+//var projectName		= 'testRun';
+//var useWpBootstrap	= false; // 'false | true'
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Load Plugins
 -------------------------------------------------------------------------------------------------- */
+// General utilities
 var contains		= require('gulp-contains');
 var git 			= require('gulp-git');
 var gulp 			= require('gulp');
 var gulpif 			= require('gulp-if');
 var gutil 			= require('gulp-util');
 var del 			= require('del');
-var deporder 		= require('gulp-deporder');
 var fs 				= require('fs');
-var imagemin      	= require('gulp-imagemin');
 var inject 			= require('gulp-inject-string');
 var lineEndCorrect	= require('gulp-line-ending-corrector');
 var newer    		= require('gulp-newer');
@@ -44,27 +43,28 @@ var rename 			= require('gulp-rename');
 var replace 		= require('replace-in-file');
 var stripLine  		= require('gulp-strip-line');
 var unzip 			= require('gulp-unzip');
-
-// Browsersync related
 var browserSync  	= require('browser-sync');
 var reload       	= browserSync.reload;
 
-// Javascript related
-var concat 			= require('gulp-concat');
-var jshint 			= require('gulp-jshint');
-var stripDebug 		= require('gulp-strip-debug');
-var uglify 			= require('gulp-uglify');
-
-// Style related
+// Javascript and Style related
 var assets 			= require('postcss-assets');
 var autoprefixer 	= require('autoprefixer');
+var concat 			= require('gulp-concat');
 var cssnano 		= require('cssnano');
 var cssnext 		= require('postcss-cssnext');
+var deporder 		= require('gulp-deporder');
+var jshint 			= require('gulp-jshint');
 var less 			= require('gulp-less');
 var partialimport 	= require('postcss-easy-import');
 var postcss 		= require('gulp-postcss');
 var sass 			= require('gulp-sass');
 var sourcemaps 		= require('gulp-sourcemaps');
+var stripDebug 		= require('gulp-strip-debug');
+var uglify 			= require('gulp-uglify');
+
+// Media related
+var imagemin      	= require('gulp-imagemin');
+
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Project Constants
@@ -85,10 +85,6 @@ var _templateName 	= {
 	bStrap 	: 'wp_bootstrap'
 };
 
-if (useBootstrap) {
-	var _twbsSrc	= 'node_modules/bootstrap/';
-}
-
 var _theme 			= {
 	dest 	: 'wordpress/wp-content/themes/' + _package.name + '/' 
 };
@@ -100,7 +96,7 @@ var _environment	= {
 };
 
 var _fonts 			= {
-	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'fonts/' : 'fonts/'),
+	src 	: _environment.src + 'fonts/',
 	dest 	: _environment.dev + _theme.dest + 'fonts/'
 };
 
@@ -115,14 +111,14 @@ var _includes 		= {
 };
 
 var _jsEnqueues		= {
-	vendorLibs 	: '\n    wp_enqueue_script( \'' + _package.name + '-vendor\', get_template_directory_uri() . \'/js/' + _package.name + '-vendor.js\', array(\'jquery\'), \'\', false );',
-	header 		: '\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js\', array(\'jquery\'), \'\', false );',
-	footer 		: '\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js\', array(\'jquery\'), \'\', true );'
+	libs	 	: '\n\n    wp_enqueue_script( \'' + _package.name + '-libs\', get_template_directory_uri() . \'/js/' + _package.name + '-libs.js\', array(\'jquery\'), \'\', false );',
+	header 		: '\n\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js\', array(\'jquery\'), \'\', false );',
+	footer 		: '\n\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js\', array(\'jquery\'), \'\', true );'
 };
 
 var _injectEnqueue 	= {
 	find 	: _package.name + '_scripts() {',
-	replace : _jsEnqueues.vendorLibs + _jsEnqueues.header + _jsEnqueues.footer,
+	replace : _jsEnqueues.libs + _jsEnqueues.header + _jsEnqueues.footer,
 	test 	: 'wp_enqueue_script( \'' + _package.name + '-header\'',
 	strip	:
 		{
@@ -131,11 +127,7 @@ var _injectEnqueue 	= {
 		}
 };
 
-/**
- * @TODO: if we're using Bootstrap, we ALSO want to process the stuff in twbsSrc
- */
 var _js 			= {
-//	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'js/' : 'js/'),
 	src 	: _environment.src + 'js/',
 	dest 	: _environment.dev + _theme.dest + 'js/'
 };
@@ -155,10 +147,10 @@ var _pkgRenameOpts 	= {
   files 	: _environment.src + '**/*',
   ignore 	: _environment.src + '*.css',
   from 		: [
-	new RegExp("\\b" + (useBootstrap ?  _templateName.bStrap : _templateName.uScores) + "-", "g"),
-	new RegExp("\\b " + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
-	new RegExp("\\b" + (useBootstrap ?  _templateName.bStrap : _templateName.uScores) + "_", "g"),
-	new RegExp("\\b" + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
+	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores) + "-", "g"),
+	new RegExp("\\b " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
+	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores) + "_", "g"),
+	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
 	],
   to 		: [
   	_package.name + '-', 
@@ -168,7 +160,7 @@ var _pkgRenameOpts 	= {
   ]
 };
 
-if (useBootstrap) {
+if (useWpBootstrap) {
 	var _targetFiles = [_environment.src + '*.css'];
 } else {
 	var _targetFiles = [_environment.src + '*.css', _environment.src + '**/*.scss'];
@@ -176,8 +168,8 @@ if (useBootstrap) {
 var _pkgRenameStyleOpts = {
   files 	: _targetFiles,
   from 		: [
-	new RegExp("Theme Name: " + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
-	new RegExp("Text Domain: " + (useBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
+	new RegExp("Theme Name: " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
+	new RegExp("Text Domain: " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
   ],
   to 		: [
   	'Theme Name: ' + _package.name, 
@@ -241,15 +233,15 @@ if (_appConfig.server.customPort !== null){
 }
 
 var _style 			= {
-	src 	: _environment.src + (useBootstrap ?  _twbsSrc + 'less/' : 'sass/'),
+	src 	: _environment.src + (useWpBootstrap ?  'node_modules/bootstrap/less/' : 'sass/'),
 	dest 	: _environment.dev + _theme.dest
 };
-if (useBootstrap) {
+if (useWpBootstrap) {
 	_style.compileReqs 		= '_bootstrap.less';
 }
 
 var _template 		= {
-	src 	: (useBootstrap ? _templateSrc.bStrap : _templateSrc.uScores)
+	src 	: (useWpBootstrap ? _templateSrc.bStrap : _templateSrc.uScores)
 };
 
 var _themeFiles 	= {
@@ -318,7 +310,7 @@ var _notices 			= {
 		}
 	},
 	tempInstMsgs		: {
-		clone_s			: 'The template has been cloned from Github for ' + _package.name,
+		clone_repo		: 'The template has been cloned from Github for ' + _package.name,
 		pkg_name_style 	: 'The style files have been reset for ' + _package.name,
 		pkg_name_other 	: 'The package files have been reset for ' + _package.name
 	},
@@ -387,8 +379,8 @@ gulp.task('install-wordpress', [
 /**
  * @task: 'cleanup-dev'
  *
- *	1. Empties a pre-exisiting 'dev' folder, if present
- *	2. Empties a pre-exisiting 'dist' folder, if present
+ *	1. Empties a pre-existing 'dev' folder for this project, if present
+ *	2. Empties a pre-existing 'dist' folder for this project, if present
  *
  */
 gulp.task('cleanup-dev', function (cb) {
@@ -449,7 +441,7 @@ gulp.task('copy-config', ['unzip-wordpress'], function () {
 /**
  * @task: 'cleanup-install'
  *
- *	1. Removes the downloaded zip file
+ *	1. Removes the leftover downloaded zip file
  *
  */
 gulp.task('cleanup-install', ['unzip-wordpress'], function () {
@@ -491,49 +483,25 @@ gulp.task('disable-cron', function () {
  * Installs a fresh copy of the '_s' template source files into a project-specific theme subfolder
  *
  * - install-template (the main task runner)
- * - clone_s
+ * - clone-repo
  * - replace-package-name-style
  * - replace-package-name
  * - cleanup-template-files
  *
  */
 /**
- * @FUTURE: Allow for custom theme repos based on: a) _s structure; b) custom structure
- *
- * This will require setting up individual config files for each project so that users
- * can keep their various projects separated from each other
- *
- * See: http://www.drinchev.com/blog/let-s-scale-that-gulpfile-js/
- * See: https://stackoverflow.com/questions/23903551/how-to-import-or-include-a-javascript-file-in-a-gulp-file
- * See: https://medium.com/@_jh3y/how-to-parsing-a-config-file-for-custom-builds-with-gulp-js-3af364ffea30
- *
- * @NOTE: the following bit will prove useful for downloading from a different URL
- * run "gulp mytask --repo <repo-url-here>" to use a custom repo
- * run "gulp mytask" to use the default _s repo
- *
- * See: https://stackoverflow.com/questions/28538918/pass-parameter-to-gulp-task
- */
-/*
-	var repo, i = process.argv.indexOf("--repo"); // gets the index of the argument we're after
-	gulp.task('mytask', function() {
-		if(i>-1) { // if an index was found, get the URL for custom repo which was passed as an arg
-		    repo = process.argv[i+1];
-		    console.log(repo);
-		} 
-		else {// else use the standard _s repo
-		}
-	});
-*/
-/**
  * @task: 'install-template'
  *
- *	1. Clones the underscores template from GitHub
+ *	1. Clones the specified template from GitHub
  *	2. Updates the template name in the .css and .scss files
  *	3. Updates the template name in the remaining files
  *
  */
+/**
+ * @TODO: 
+ */
 gulp.task('install-template', [
-	'clone_s', 
+	'clone-repo', 
 	'replace-package-name-style', 
 	'replace-package-name', 
 	'cleanup-template-files'
@@ -541,15 +509,15 @@ gulp.task('install-template', [
 );
 
 /**
- * @task: 'clone_s'
+ * @task: 'clone-repo'
  *
- *	1. Clones the '_s' template into a project-specific theme subfolder 
+ *	1. Clones the specified into a project-specific theme subfolder 
  *
  */
-gulp.task('clone_s', function(cb){
+gulp.task('clone-repo', function(cb){
 	return git.clone(_template.src, {args: _environment.src}, function (err) {
 		cb(err);
-		gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.clone_s);
+		gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.clone_repo);
 	});
 });
 
@@ -559,7 +527,7 @@ gulp.task('clone_s', function(cb){
  *	1. Replaces '_s' with the packageName in the project's '.css' and '.scss' files
  *
  */
-gulp.task('replace-package-name-style', ['clone_s'], function() {
+gulp.task('replace-package-name-style', ['clone-repo'], function() {
 	return replace(_pkgRenameStyleOpts, function(error, changes) {
 		if (error) {
 	    	console.error('Error occurred:', error); 
@@ -576,7 +544,7 @@ gulp.task('replace-package-name-style', ['clone_s'], function() {
  *	1. Replaces '_s' with the packageName in the project's remaining files
  *
  */
-gulp.task('replace-package-name', ['clone_s'], function() {
+gulp.task('replace-package-name', ['clone-repo'], function() {
 	return replace(_pkgRenameOpts, function(error, changes) {
 		if (error) {
 			console.error('Error occurred:', error); 
@@ -593,7 +561,7 @@ gulp.task('replace-package-name', ['clone_s'], function() {
  *	1. Removes the legacy '.github' folder from the template
  *
  */
-gulp.task('cleanup-template-files', ['clone_s'], function () {
+gulp.task('cleanup-template-files', ['clone-repo'], function () {
 	return del([_environment.src + '.github']);
 });
 
@@ -618,7 +586,7 @@ gulp.task('cleanup-template-files', ['clone_s'], function () {
  * - compress-images
  * - load-js (a sub-task runner)
  * - process-js
- * - update-funcs
+ * - update-functions-file
  * - default (s sub-task runner)
  * - watch
  *
@@ -682,19 +650,6 @@ gulp.task('load-languages', function(){
 });
 
 /**
- * @task: 'load-plugins'
- *
- *	1. Loads the project's 'plugins' to the project build's install directory
- *
- */
-//gulp.task('load-plugins', function(){
-//	gulp.src(plugins.src + '**/*'//)
-//		.pipe(plumber({ errorHandler: onError }))
-//		.pipe(gulp.dest(plugins.dest))
-//    	.pipe(notify({ message: _notices.buildMsgs.load_plugins, title: _product.name, onLast: true}));
-//});
-
-/**
  * @task: 'load-assets'
  *
  *	1. Runs all of the 'build tasks' related to processing and copying the 
@@ -735,10 +690,10 @@ gulp.task('load-assets', [
  *
  */
 gulp.task('load-styles', ['load-images'], function(){
-	return gulp.src(_style.src + (useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
+	return gulp.src(_style.src + (useWpBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(sourcemaps.init())
-		.pipe( ( useBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
+		.pipe( ( useWpBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
 		.pipe(postcss([
 			autoprefixer(_target_browsers)
 		]))
@@ -811,7 +766,7 @@ gulp.task('compress-images', function() {
  *	1. Copies the project's JS files to the project build's theme directory
  *
  */
-gulp.task('load-js', ['load-vendor-libs-js', 'load-custom-js', 'update-funcs']);
+gulp.task('load-js', ['load-libs-js', 'load-custom-js', 'update-functions-file']);
 
 gulp.task('load-custom-js', ['process-header-js', 'process-footer-js']);
 
@@ -872,9 +827,9 @@ gulp.task('process-footer-js', function() {
 });
 
 /**
- * @task: 'load-vendor-libs-js'
+ * @task: 'load-libs-js'
  *
- * This task processes 'themes/<project-name>/js/vendor/**' + ' /*.js'. 
+ * This task processes 'themes/<project-name>/js/libs/**' + ' /*.js'. 
  * 
  * 	1. Check to see if there any new or updated vendor JS files
  * 	2. If so, uglify any files that are not already minified
@@ -887,20 +842,17 @@ gulp.task('process-footer-js', function() {
  * has been modified more recently than the concatenated dest file
  *
  */
-/**
- * @TODO: if(useBootstrap) bootstrap files also need to be included
- */
-gulp.task('load-vendor-libs-js', function() {
-	return gulp.src([_js.src + 'vendor/**/*.js'])
+gulp.task('load-libs-js', function() {
+	return gulp.src([_js.src + 'libs/**/*.js'])
 		.pipe(plumber({ errorHandler: onError }))
-	    .pipe(newer(_js.dest + _package.name + '-vendor.js'))
+	    .pipe(newer(_js.dest + _package.name + '-libs.js'))
         .pipe(gulpif(["*.js", "!*.min.js"],
             uglify()
         ))
         .pipe(gulpif(["*.js", "!*.min.js"],
             rename({suffix: ".min"})
 		))
-	    .pipe(concat(_package.name + '-vendor.js'))
+	    .pipe(concat(_package.name + '-libs.js'))
 	    .pipe(lineEndCorrect())
 	    .pipe(gulp.dest(_js.dest))
     	.pipe(notify({message: _notices.buildMsgs.process_libs_js, title: _product.name, onLast: true}));
@@ -909,15 +861,14 @@ gulp.task('load-vendor-libs-js', function() {
 /**
  * @task: 'update-functions-file'
  *
- *	1. Tests the function file to see if it already enqueues the processed JS files
+ *	1. Tests the function file to see if it already enqueues the correct JS files
  * 	2. If not already up to date:
- * 		2.1 Injects code to enqueue the new JS files
+ * 		2.1 Injects code to enqueue the correct JS files
  * 		2.2 Removes any default code leftover from the initial template install which enqueues unused JS files
  * 		2.3 Saves the updated functions.php file to the project's dev and theme folders
  *
  */
-
-gulp.task('update-funcs', ['load-custom-js', 'load-vendor-libs-js'], function () {
+gulp.task('update-functions-file', ['load-custom-js', 'load-libs-js'], function () {
 	fs.readFile(_environment.src + 'functions.php', function (err, data) {
 		if (err) {
 			return gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.buildMsgs.update_funcs.missing);
@@ -1013,4 +964,49 @@ Translation Tasks
          } ))
         .pipe(gulp.dest(_languages.src));
  });
+*/
+//--------------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------------
+Plugins Tasks
+-------------------------------------------------------------------------------------------------- */
+/**
+ * @task: 'load-plugins'
+ *
+ *	1. Loads the project's 'plugins' to the project build's install directory
+ *
+ */
+//gulp.task('load-plugins', function(){
+//	gulp.src(plugins.src + '**/*'//)
+//		.pipe(plumber({ errorHandler: onError }))
+//		.pipe(gulp.dest(plugins.dest))
+//    	.pipe(notify({ message: _notices.buildMsgs.load_plugins, title: _product.name, onLast: true}));
+//});
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @FUTURE: Allow for custom theme repos based on: a) _s structure; b) custom structure
+ *
+ * This will require setting up individual config files for each project so that users
+ * can keep their various projects separated from each other
+ *
+ * See: http://www.drinchev.com/blog/let-s-scale-that-gulpfile-js/
+ * See: https://stackoverflow.com/questions/23903551/how-to-import-or-include-a-javascript-file-in-a-gulp-file
+ * See: https://medium.com/@_jh3y/how-to-parsing-a-config-file-for-custom-builds-with-gulp-js-3af364ffea30
+ *
+ * @NOTE: the following bit will prove useful for downloading from a different URL
+ * run "gulp mytask --repo <repo-url-here>" to use a custom repo
+ * run "gulp mytask" to use the default _s repo
+ *
+ * See: https://stackoverflow.com/questions/28538918/pass-parameter-to-gulp-task
+ */
+/*
+	var repo, i = process.argv.indexOf("--repo"); // gets the index of the argument we're after
+	gulp.task('mytask', function() {
+		if(i>-1) { // if an index was found, get the URL for custom repo which was passed as an arg
+		    repo = process.argv[i+1];
+		    console.log(repo);
+		} 
+		else {// else use the standard _s repo
+		}
+	});
 */

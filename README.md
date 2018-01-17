@@ -1,4 +1,4 @@
-# Zero2WP v0.0.5
+# Zero2WP v0.0.6
 A build system for automating the WordPress development workflow.
 
 ## Introduction
@@ -12,7 +12,7 @@ Zero2WP is a robust build system for WordPress theme, plugin, and site developer
 - Lint, order, concatenate, uglify & correct line-endings in JS
 - Compress PNG, JPEG, GIF & SVG images
 - Instantly update browsers on changes in project files
-- ... more in the works (ES6 transpiling, dist tasks, i18n/l10n, custom templates, RTL, A11y, etc)
+- ... more in the works (dist tasks, i18n/l10n, custom templates, RTL, A11y, etc)
 
 ## 1. Install Zero2WP
 
