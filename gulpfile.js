@@ -16,10 +16,10 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-var projectName		= 'bootRun';
-var useWpBootstrap	= true; // 'false | true'
-//var projectName		= 'testRun';
-//var useWpBootstrap	= false; // 'false | true'
+//var projectName		= 'bootRun';
+//var useWpBootstrap	= true; // 'false | true'
+var projectName		= 'testRun';
+var useWpBootstrap	= false; // 'false | true'
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -95,31 +95,21 @@ var _environment	= {
 	src 	: './themes/' + _package.name + '/'
 };
 
-var _fonts 			= {
-	src 	: _environment.src + 'fonts/',
-	dest 	: _environment.dev + _theme.dest + 'fonts/'
+var _enqueues		= {
+	scripts : {
+		libs	: '\n\n    wp_enqueue_script( \'' + _package.name + '-libs\', get_template_directory_uri() . \'/assets/js/' + _package.name + '-libs.js\', array(\'jquery\'), \'\', false );',
+		header 	: '\n\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/assets/js/' + _package.name + '-header.js\', array(\'jquery\'), \'\', false );',
+		footer 	: '\n\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/assets/js/' + _package.name + '-footer.js\', array(\'jquery\'), \'\', true );'
+	},
+	styles 	: {
+		theme 	: '\n\n    wp_enqueue_style( \'' + _package.name + '-theme-style\', get_template_directory_uri() . \'/assets/css/' + _package.name + '-theme-style.css\', array(), false, \'all\' );',
+	}
 };
 
-var _img 			= {
-	src 	: _environment.src + 'img/' + 'raw/**/*.{png,jpg,gif,svg}',
-	dest 	: _environment.dev + _theme.dest + 'img/'
-};
-
-var _includes 		= {
-	src  	: _environment.src + 'inc/',
-	dest 	: _environment.dev + _theme.dest + 'inc/'
-};
-
-var _jsEnqueues		= {
-	libs	 	: '\n\n    wp_enqueue_script( \'' + _package.name + '-libs\', get_template_directory_uri() . \'/js/' + _package.name + '-libs.js\', array(\'jquery\'), \'\', false );',
-	header 		: '\n\n    wp_enqueue_script( \'' + _package.name + '-header\', get_template_directory_uri() . \'/js/' + _package.name + '-header.js\', array(\'jquery\'), \'\', false );',
-	footer 		: '\n\n    wp_enqueue_script( \'' + _package.name + '-footer\', get_template_directory_uri() . \'/js/' + _package.name + '-footer.js\', array(\'jquery\'), \'\', true );'
-};
-
-var _injectEnqueue 	= {
-	find 	: _package.name + '_scripts() {',
-	replace : _jsEnqueues.libs + _jsEnqueues.header + _jsEnqueues.footer,
-	test 	: 'wp_enqueue_script( \'' + _package.name + '-header\'',
+var _injectEnqueues	= {
+	find 	: 'wp_enqueue_style( \'' + _package.name + '-style\', get_stylesheet_uri() );',
+	insert  : _enqueues.styles.theme + _enqueues.scripts.libs + _enqueues.scripts.header + _enqueues.scripts.footer,
+	test 	: 'wp_enqueue_style( \'' + _package.name + '-theme-style\'',
 	strip	:
 		{
 			navScript		: '-navigation\'',
@@ -127,9 +117,24 @@ var _injectEnqueue 	= {
 		}
 };
 
+var _fonts 			= {
+	src 	: _environment.src + 'fonts/',
+	dest 	: _environment.dev + _theme.dest + 'assets/fonts/'
+};
+
+var _img 			= {
+	src 	: _environment.src + 'img/' + 'raw/**/*.{png,jpg,gif,svg}',
+	dest 	: _environment.dev + _theme.dest + 'assets/img/'
+};
+
+var _includes 		= {
+	src  	: _environment.src + 'inc/',
+	dest 	: _environment.dev + _theme.dest + 'inc/'
+};
+
 var _js 			= {
 	src 	: _environment.src + 'js/',
-	dest 	: _environment.dev + _theme.dest + 'js/'
+	dest 	: _environment.dev + _theme.dest + 'assets/js/'
 };
 
 var _jshintOpts 	= {
@@ -234,7 +239,7 @@ if (_appConfig.server.customPort !== null){
 
 var _style 			= {
 	src 	: _environment.src + (useWpBootstrap ?  'node_modules/bootstrap/less/' : 'sass/'),
-	dest 	: _environment.dev + _theme.dest
+	dest 	: _environment.dev + _theme.dest + 'assets/css/'
 };
 if (useWpBootstrap) {
 	_style.compileReqs 		= '_bootstrap.less';
@@ -298,10 +303,10 @@ var _notices 			= {
 		process_head_js	: 'Processed, compressed, and loaded custom header JS files to the dev folder for ' + _package.name,
 		process_foot_js	: 'Processed, compressed, and loaded custom footer JS files to the dev folder for ' + _package.name,
 		process_libs_js	: 'Processed, compressed, and loaded vendor JS libraries to the dev folder for ' + _package.name,
-		update_funcs	: {
-			yes			: 'Updated and loaded the functions.php file to the dev folder for ' + _package.name,
-			no 			: 'The functions.php file for ' + _package.name + ' is already up to date',
-			missing 	: 'The functions.php file for ' + _package.name + ' could not be read'
+		update_enqueues	: {
+			missing 	: 'The functions.php file for ' + _package.name + ' could not be read',
+			ok 			: 'The enqueues for ' + _package.name + ' are already up to date',
+			updated 	: 'The enqueues for ' + _package.name + ' have been updated'
 		},
 		disable_cron 	: {
 			yes			: 'WP_CRON has been disabled in the wp-config.php file for ' + _package.name,
@@ -576,18 +581,19 @@ gulp.task('cleanup-template-files', ['clone-repo'], function () {
  * 
  * Tasks:
  * - build (the main task runner)
- * - load-themeFiles
  * - load-includes
  * - load-languages
  * - load-assets (a sub-task runner)
- * - load-styles
  * - load-fonts
  * - load-images
  * - compress-images
+ * - load-styles
  * - load-js (a sub-task runner)
  * - process-js
- * - update-functions-file
- * - default (s sub-task runner)
+ * - load-themeFiles
+ * - js-enqueues
+ * - style-enqueues
+ * - default (a sub-task runner)
  * - watch
  *
  */
@@ -598,30 +604,12 @@ gulp.task('cleanup-template-files', ['clone-repo'], function () {
  *
  */
 gulp.task('build', [
-	'load-themeFiles',
 	'load-includes',
 	'load-languages',
 	'load-assets',
-	'watch'
+	'load-themeFiles',
+//	'watch'
 ]);
-
-/**
- * @task: 'load-themeFiles'
- *
- *	1. Loads the project's template/theme files and folders to the project's dev directory
- *
- */
-gulp.task('load-themeFiles', function(){
-	if (!fs.existsSync(_environment.dev)) {
-		gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.wpInstMsgs.missing);
-		process.exit(1);
-	} else {
-		return gulp.src(_themeFiles.src)
-			.pipe(plumber({ errorHandler: onError }))
-			.pipe(gulp.dest(_themeFiles.dest))
-    		.pipe(notify({ message: _notices.buildMsgs.load_themeFiles, title: _product.name, onLast: true}));
-	}
-});
 
 /**
  * @task: 'load-includes'
@@ -657,52 +645,12 @@ gulp.task('load-languages', function(){
  *
  */
 gulp.task('load-assets', [
-	'load-styles',
 	'load-fonts',
 	'load-images',
+	'load-styles',
 	'load-js'
 	]
 );
-
-/**
- * @task: 'load-styles'
- *
- *	1. Compiles the project's SCSS files to CSS
- *	2. Adds browser prefixes as needed
- *	3. Creates and saves a sourcemap within the css file to assist with debugging
- * 	4. Corrects line endings as needed
- * 	5. Loads the finalized CSS file into the project's build directory
- * 	6. Streams changes to the browser
- * 	7. Posts a notice to confirm that css processing is complete
- *
- */
-/**
- * See: https://www.sitepoint.com/postcss-mythbusting/
- * : look into adding: https://github.com/SlexAxton/css-colorguard
- * : look into adding: https://stylelint.io/
- * : look into adding: https://github.com/borodean/postcss-assets
- * ... 	
-	assets({
-		loadPaths: _postcssAssetsOps.loadPaths,
-			basePath: _postcssAssetsOps.basePath,
-			baseUrl: _postcssAssetsOps.baseUrl
-	}),
- *
- */
-gulp.task('load-styles', ['load-images'], function(){
-	return gulp.src(_style.src + (useWpBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
-		.pipe(plumber({ errorHandler: onError }))
-		.pipe(sourcemaps.init())
-		.pipe( ( useWpBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
-		.pipe(postcss([
-			autoprefixer(_target_browsers)
-		]))
-		.pipe(sourcemaps.write())
-	    .pipe(lineEndCorrect())
-		.pipe(gulp.dest(_style.dest))
-		.pipe(browserSync.stream({ match: '**/*.css' }))
-    	.pipe(notify({message: _notices.buildMsgs.load_styles, title: _product.name, onLast: true}));
-});
 
 /**
  * @task: 'load-fonts'
@@ -761,12 +709,52 @@ gulp.task('compress-images', function() {
 });
 
 /**
+ * @task: 'load-styles'
+ *
+ *	1. Compiles the project's SCSS files to CSS
+ *	2. Adds browser prefixes as needed
+ *	3. Creates and saves a sourcemap within the css file to assist with debugging
+ * 	4. Corrects line endings as needed
+ * 	5. Loads the finalized CSS file into the project's build directory
+ * 	6. Streams changes to the browser
+ * 	7. Posts a notice to confirm that css processing is complete
+ *
+ */
+/**
+ * See: https://www.sitepoint.com/postcss-mythbusting/
+ * : look into adding: https://github.com/SlexAxton/css-colorguard
+ * : look into adding: https://stylelint.io/
+ * : look into adding: https://github.com/borodean/postcss-assets
+ * ... 	
+	assets({
+		loadPaths: _postcssAssetsOps.loadPaths,
+			basePath: _postcssAssetsOps.basePath,
+			baseUrl: _postcssAssetsOps.baseUrl
+	}),
+ *
+ */
+gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
+	return gulp.src(_style.src + (useWpBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
+		.pipe(plumber({ errorHandler: onError }))
+		.pipe(sourcemaps.init())
+		.pipe( ( useWpBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
+		.pipe(postcss([
+			autoprefixer(_target_browsers)
+		]))
+		.pipe(sourcemaps.write())
+	    .pipe(lineEndCorrect())
+		.pipe(gulp.dest(_style.dest))
+		.pipe(browserSync.stream({ match: '**/*.css' }))
+    	.pipe(notify({message: _notices.buildMsgs.load_styles, title: _product.name, onLast: true}));
+});
+
+/**
  * @task: 'load-js'
  *
  *	1. Copies the project's JS files to the project build's theme directory
  *
  */
-gulp.task('load-js', ['load-libs-js', 'load-custom-js', 'update-functions-file']);
+gulp.task('load-js', ['load-libs-js', 'load-custom-js']);
 
 gulp.task('load-custom-js', ['process-header-js', 'process-footer-js']);
 
@@ -859,32 +847,43 @@ gulp.task('load-libs-js', function() {
 });
 
 /**
- * @task: 'update-functions-file'
+ * @task: 'load-themeFiles'
  *
- *	1. Tests the function file to see if it already enqueues the correct JS files
- * 	2. If not already up to date:
- * 		2.1 Injects code to enqueue the correct JS files
- * 		2.2 Removes any default code leftover from the initial template install which enqueues unused JS files
- * 		2.3 Saves the updated functions.php file to the project's dev and theme folders
+ *	1. Loads the project's template/theme files and folders to the project's dev directory
  *
  */
-gulp.task('update-functions-file', ['load-custom-js', 'load-libs-js'], function () {
-	fs.readFile(_environment.src + 'functions.php', function (err, data) {
-		if (err) {
-			return gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.buildMsgs.update_funcs.missing);
-		}
-		if (data.indexOf(_injectEnqueue.test) >= 0) {
-			return gutil.log(_product.name + ' - ' + _notices.buildMsgs.update_funcs.no);
-		} 
-		else {
-			return gulp.src([_environment.src + 'functions.php'])
+gulp.task('load-themeFiles', ['insert-enqueues'], function(){
+	if (!fs.existsSync(_environment.dev)) {
+		gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.wpInstMsgs.missing);
+		process.exit(1);
+	} else {
+		return gulp.src(_themeFiles.src)
 			.pipe(plumber({ errorHandler: onError }))
-			.pipe(inject.after(_injectEnqueue.find, _injectEnqueue.replace ))
-			.pipe(stripLine([_injectEnqueue.strip.navScript, 'use strict']))
-			.pipe(stripLine([_injectEnqueue.strip.skipLinkScript, 'use strict']))
+			.pipe(gulp.dest(_themeFiles.dest))
+    		.pipe(notify({ message: _notices.buildMsgs.load_themeFiles, title: _product.name, onLast: true}));
+	}
+});
+
+gulp.task('insert-enqueues', ['load-assets'], function () {
+	fs.readFile(_environment.src + 'functions.php', function (err, data) {
+		if (err) 
+		{
+			return gutil.log(_product.name + ' - ' + _warning + ' - ' + _notices.buildMsgs.update_enqueues.missing);
+		}
+		if (data.indexOf(_injectEnqueues.test) >= 0) 
+		{
+			return gutil.log(_product.name + ' - ' + _notices.buildMsgs.update_enqueues.ok);
+		} 
+		else
+		{
+			return gulp.src([_environment.src + 'functions.php'], {base: _environment.src})
+			.pipe(plumber({ errorHandler: onError }))
+			.pipe(inject.after(_injectEnqueues.find, _injectEnqueues.insert ))
+			.pipe(stripLine([_injectEnqueues.strip.navScript, 'use strict']))
+			.pipe(stripLine([_injectEnqueues.strip.skipLinkScript, 'use strict']))
 		    .pipe(gulp.dest(_environment.src))
-		    .pipe(gulp.dest(_environment.dev + _theme.dest))
-	    	.pipe(notify({message: _notices.buildMsgs.update_funcs.yes, title: _product.name, onLast: true}));
+	    	.pipe(notify({message: _notices.buildMsgs.update_enqueues.updated, title: _product.name, onLast: true}));
+
 		}
 	});
 });
@@ -899,11 +898,11 @@ gulp.task('update-functions-file', ['load-custom-js', 'load-libs-js'], function 
 gulp.task('watch', function(){ 
 	browserSync.init(_server);
 
-	gulp.watch(_style.src + '**/*', ['load-styles']);
 	gulp.watch(_fonts.src + '**/*', ['load-fonts', reload]);
 	gulp.watch(_img.src + '**', ['load-images', reload]);
 	gulp.watch(_includes.src + '**/*', ['load-includes', reload]);
 	gulp.watch(_js.src + '**/*', ['load-js', reload]);
+	gulp.watch(_style.src + '**/*', ['load-styles']);
 	gulp.watch(_languages.src + '**/*', ['load-lang', reload]);
 	//gulp.watch(plugins.src + '**/*', ['load-plugins', reload]);
 	gulp.watch(_themeFiles.src, ['load-themeFiles', reload]);
