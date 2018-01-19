@@ -8,7 +8,8 @@
 	},
 	"developer"		: {
 		"name" 		: "Arnold Wytenburg",
-		"email"		: "arnold@arnoldwytenburg.com"
+		"email"		: "arnold@arnoldwytenburg.com",
+		"url"		: "https://arnoldwytenburg.com"
 	},
 	"translator"	: {
 		"name" 		: "Arnold Wytenburg",

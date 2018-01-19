@@ -18,8 +18,13 @@ Project Variables
 // START EDITING
 //var projectName		= 'bootRun';
 //var useWpBootstrap	= true; // 'false | true'
-var projectName		= 'testRun';
-var useWpBootstrap	= false; // 'false | true'
+var projectName			= "testRun"; // REQD
+var useWpBootstrap		= false; // REQD // 'false | true'
+var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
+var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
+var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
+var projectDesc 		= "<Place the description for the project here>"; // OPTIONAL
+var projectVersion		= '0.0.1' // REQD // Use semantic versioning
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -39,6 +44,7 @@ var newer    		= require('gulp-newer');
 var notify	        = require('gulp-notify');
 var plumber 		= require('gulp-plumber');
 var remoteSrc 		= require('gulp-remote-src');
+var removeLine 		= require( "gulp-remove-line" );
 var rename 			= require('gulp-rename');
 var replace 		= require('replace-in-file');
 var stripLine  		= require('gulp-strip-line');
@@ -72,8 +78,28 @@ Project Constants
 var _appConfig 		= JSON.parse(fs.readFileSync('./config/app-config.json'));
 
 var _package 		= {
-	name 	: projectName.toLowerCase()
+	title 			: projectName,
+	name 			: projectName.toLowerCase(),
+	URI 			: projectURI, // can be false
+	license 		: projectLicense,
+	licenseURI 		: projectLicenseURI,
+	description 	: projectDesc,
+	version 		: projectVersion
 };
+
+var _styleBanner 			= [
+	"/*!",
+	" * Theme Name: "	+ _package.title,
+	" * Theme URI: "	+ (_package.URI ? _package.URI : ""),
+	" * Author: "		+ _appConfig.developer.name,
+	" * Author URI: "	+ _appConfig.developer.url,
+	" * Description: "	+ _package.description,
+	" * Version: "		+ _package.version,
+	" * License: "		+ _package.license,
+	" * License URI: "	+ _package.licenseURI,
+	" * Text Domain: "	+ _package.name,
+	" */"
+].join("\n");
 
 var _templateSrc 	= {
 	uScores : 'https://github.com/Automattic/_s.git',
@@ -177,7 +203,7 @@ var _pkgRenameStyleOpts = {
 	new RegExp("Text Domain: " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
   ],
   to 		: [
-  	'Theme Name: ' + _package.name, 
+  	'Theme Name: ' + _package.tile, 
   	'Text Domain: ' + _package.name
   ]
 };
@@ -280,7 +306,7 @@ var _target_browsers = [
   ];
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
-Project Utilities
+App Utilities
 -------------------------------------------------------------------------------------------------- */
 var _date 				= new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
 
@@ -344,6 +370,24 @@ var onError 			= function (err) {
 	gutil.log(_product.name + ' - ' + _warning + ' ' + err.toString());
 	this.emit('end');
 };
+
+/**
+ * @TODO: facftor this into a solution for the style.css and style.scss files
+ */
+gulp.task( "fix-styles", function ( ) {
+	var path = _environment.src + 'style.css';    
+	var text = fs.readFileSync(path).toString();
+	var lines = text.split('\n');
+	var newlines_count = lines.length - 1;
+
+	if (newlines_count > 1 ) {
+	    gulp.src( [ _environment.src + 'style.css' ])
+        .pipe( removeLine( { "style.css" : [ '2-' + newlines_count ] } ) )
+        .pipe( gulp.dest( _environment.src ) )
+        .pipe(notify('here'));
+ 	}
+});
+
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
  * Wordpress Installation
@@ -501,9 +545,6 @@ gulp.task('disable-cron', function () {
  *	2. Updates the template name in the .css and .scss files
  *	3. Updates the template name in the remaining files
  *
- */
-/**
- * @TODO: 
  */
 gulp.task('install-template', [
 	'clone-repo', 

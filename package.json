@@ -27,12 +27,14 @@
     "gulp-imagemin": "^4.1.0",
     "gulp-inject-string": "^1.1.1",
     "gulp-jshint": "^2.1.0",
+    "gulp-less": "^3.4.0",
     "gulp-line-ending-corrector": "^1.0.2",
     "gulp-newer": "^1.4.0",
     "gulp-notify": "^3.1.0",
     "gulp-plumber": "^1.2.0",
     "gulp-postcss": "^7.0.1",
     "gulp-remote-src": "^0.4.3",
+    "gulp-remove-line": "^1.0.4",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.6.3",
@@ -46,8 +48,5 @@
     "postcss-cssnext": "^3.0.2",
     "postcss-easy-import": "^3.0.0",
     "replace-in-file": "^3.1.0"
-  },
-  "dependencies": {
-    "gulp-less": "^3.4.0"
   }
 }
