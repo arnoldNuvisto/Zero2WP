@@ -77,7 +77,7 @@ var useWpBootstrap		= false; // REQD // 'false | true'
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 ```
-- These vars will tell Zero2WP everything it needs to know about your project so it can names directories and files, customize the default theme, and more.
+- These vars will tell Zero2WP everything it needs to know about your project so it can correctly name directories and files, customize the default theme, and more.
 
 ### 2.2 Install WordPress
 
@@ -109,7 +109,9 @@ gulp build
 ```
 - This will push the project's theme files into the themes directory of the project's Wordpress install, launch a PHP server, and then open Wordpress in your browser.
 
-- **Important:** when you run **'gulp build'**, Zero2WP also activates a 'watch' task that listens for changes to project files in **'Zero2Wp/themes/'**, and automatically updates both the dev folder as well as the browser whenever a change is detected.
+**Important:** 
+- When you run **'gulp build'**, Zero2WP also activates a 'watch' task that listens for changes to project files in **'Zero2Wp/themes/'**
+- Whenever a change is detected, this task automatically updates both the dev folder and the browser window.
 
 ### 2.5 Activate Wordpress
 
