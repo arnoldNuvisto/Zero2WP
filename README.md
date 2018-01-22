@@ -1,4 +1,4 @@
-# Zero2WP v0.0.6
+# Zero2WP v0.0.7
 A build system for automating the WordPress development workflow.
 
 ## Introduction
@@ -8,7 +8,7 @@ Zero2WP is a robust build system for WordPress theme, plugin, and site developer
 - Run multiple projects simultaneously from a single workbench
 - Install the latest version of WordPress for each project
 - Clone the latest version of Underscores for each project
-- Sass to CSS conversion, error catching, Autoprefixing, Sourcemaps, minify & correct line-endings
+- Sass/Less to CSS conversion, error catching, Autoprefixing, Sourcemaps, minify & correct line-endings
 - Lint, order, concatenate, uglify & correct line-endings in JS
 - Compress PNG, JPEG, GIF & SVG images
 - Instantly update browsers on changes in project files
@@ -65,11 +65,19 @@ Still working in the terminal window, navigate to the root of the Zero2WP folder
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-var projectName		= '<your project's name goes here>;
+
+var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers only
+var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
+var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
+var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
+var projectDesc 		= ""; // OPTIONAL // add textual description
+var projectVersion		= '0.0.1'; // REQD // use semantic versioning
+var useWpBootstrap		= false; // REQD // 'false | true'
+
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 ```
-- This var will tell Zero2WP the name to use for naming the project's directories and files, as well as for customizing the default theme.
+- These vars will tell Zero2WP everything it needs to know about your project so it can names directories and files, customize the default theme, and more.
 
 ### 2.2 Install WordPress
 
@@ -89,6 +97,7 @@ gulp install-template
 ```
 
 - This will clone the latest version of Underscores from GitHub and install it into a new folder for your theme in **'Zero2WP/themes/'** 
+- Note this will also update the style.css and style.scss with a new project banner
 
 
 ### 2.4 Run the Build

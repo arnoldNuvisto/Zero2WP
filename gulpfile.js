@@ -16,15 +16,17 @@
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
+
 //var projectName		= 'bootRun';
-//var useWpBootstrap	= true; // 'false | true'
-var projectName			= "testRun"; // REQD
-var useWpBootstrap		= false; // REQD // 'false | true'
+var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers only
 var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
 var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
 var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
 var projectDesc 		= "<Place the description for the project here>"; // OPTIONAL
-var projectVersion		= '0.0.1' // REQD // Use semantic versioning
+var projectVersion		= '0.0.1'; // REQD // Use semantic versioning
+//var useWpBootstrap	= true; // 'false | true'
+var useWpBootstrap		= false; // REQD // 'false | true'
+
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -38,6 +40,7 @@ var gulpif 			= require('gulp-if');
 var gutil 			= require('gulp-util');
 var del 			= require('del');
 var fs 				= require('fs');
+var header 			= require('gulp-header');
 var inject 			= require('gulp-inject-string');
 var lineEndCorrect	= require('gulp-line-ending-corrector');
 var newer    		= require('gulp-newer');
@@ -80,26 +83,12 @@ var _appConfig 		= JSON.parse(fs.readFileSync('./config/app-config.json'));
 var _package 		= {
 	title 			: projectName,
 	name 			: projectName.toLowerCase(),
-	URI 			: projectURI, // can be false
+	URI 			: projectURI, // fyi, can be 'false'
 	license 		: projectLicense,
 	licenseURI 		: projectLicenseURI,
 	description 	: projectDesc,
 	version 		: projectVersion
 };
-
-var _styleBanner 			= [
-	"/*!",
-	" * Theme Name: "	+ _package.title,
-	" * Theme URI: "	+ (_package.URI ? _package.URI : ""),
-	" * Author: "		+ _appConfig.developer.name,
-	" * Author URI: "	+ _appConfig.developer.url,
-	" * Description: "	+ _package.description,
-	" * Version: "		+ _package.version,
-	" * License: "		+ _package.license,
-	" * License URI: "	+ _package.licenseURI,
-	" * Text Domain: "	+ _package.name,
-	" */"
-].join("\n");
 
 var _templateSrc 	= {
 	uScores : 'https://github.com/Automattic/_s.git',
@@ -176,7 +165,7 @@ var _languages 		= {
 
 var _pkgRenameOpts 	= {
   files 	: _environment.src + '**/*',
-  ignore 	: _environment.src + '*.css',
+
   from 		: [
 	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores) + "-", "g"),
 	new RegExp("\\b " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
@@ -191,22 +180,6 @@ var _pkgRenameOpts 	= {
   ]
 };
 
-if (useWpBootstrap) {
-	var _targetFiles = [_environment.src + '*.css'];
-} else {
-	var _targetFiles = [_environment.src + '*.css', _environment.src + '**/*.scss'];
-}
-var _pkgRenameStyleOpts = {
-  files 	: _targetFiles,
-  from 		: [
-	new RegExp("Theme Name: " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
-	new RegExp("Text Domain: " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
-  ],
-  to 		: [
-  	'Theme Name: ' + _package.tile, 
-  	'Text Domain: ' + _package.name
-  ]
-};
 
 /*
 var plugins 		= {
@@ -252,6 +225,21 @@ var _sassOpts 		= {
 	indentType		: 'tab', // (space | tab)
 	indentWidth		: '1' // (maximum value: 10)
 };
+
+var _styleBanner 			= [
+	"/*!",
+	"Theme Name: "	+ _package.title,
+	"Theme URI: "	+ (_package.URI ? _package.URI : ""),
+	"Author: "		+ _appConfig.developer.name,
+	"Author URI: "	+ _appConfig.developer.url,
+	"Description: "	+ _package.description,
+	"Version: "		+ _package.version,
+	"License: "		+ _package.license,
+	"License URI: "	+ _package.licenseURI,
+	"Text Domain: "	+ _package.name,
+	"Tags: ",
+	"*/\n"
+];
 
 var _server 		= {
 	proxy 			: _appConfig.server.host + '/Zero2WP/dev/'  + _package.name + '/wordpress/',
@@ -370,24 +358,6 @@ var onError 			= function (err) {
 	gutil.log(_product.name + ' - ' + _warning + ' ' + err.toString());
 	this.emit('end');
 };
-
-/**
- * @TODO: facftor this into a solution for the style.css and style.scss files
- */
-gulp.task( "fix-styles", function ( ) {
-	var path = _environment.src + 'style.css';    
-	var text = fs.readFileSync(path).toString();
-	var lines = text.split('\n');
-	var newlines_count = lines.length - 1;
-
-	if (newlines_count > 1 ) {
-	    gulp.src( [ _environment.src + 'style.css' ])
-        .pipe( removeLine( { "style.css" : [ '2-' + newlines_count ] } ) )
-        .pipe( gulp.dest( _environment.src ) )
-        .pipe(notify('here'));
- 	}
-});
-
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
  * Wordpress Installation
@@ -533,7 +503,9 @@ gulp.task('disable-cron', function () {
  *
  * - install-template (the main task runner)
  * - clone-repo
- * - replace-package-name-style
+ * - update-style-banner (sub-task runner)
+ * - update-css-banner
+ * - clear-scss-banner
  * - replace-package-name
  * - cleanup-template-files
  *
@@ -542,13 +514,14 @@ gulp.task('disable-cron', function () {
  * @task: 'install-template'
  *
  *	1. Clones the specified template from GitHub
- *	2. Updates the template name in the .css and .scss files
- *	3. Updates the template name in the remaining files
+ *	2. Initiate update of the theme's banner in 'style.css' and 'sass/style.scss'
+ *	3. Updates the template name in the theme's remaining files
+ * 	5. Deletes the downloaded theme's default '.github' file
  *
  */
 gulp.task('install-template', [
 	'clone-repo', 
-	'replace-package-name-style', 
+	'update-style-banner', 
 	'replace-package-name', 
 	'cleanup-template-files'
 	]
@@ -568,29 +541,55 @@ gulp.task('clone-repo', function(cb){
 });
 
 /**
- * @task: 'replace-package-name-style'
+ * @task: 'update-style-banner'
  *
- *	1. Replaces '_s' with the packageName in the project's '.css' and '.scss' files
+ * 	1. Replaces the contents of 'style.css' with a WP-approved project banner
+ * 	2. Removes the default project banner in style.scss
+ */
+gulp.task( 'update-style-banner', ['update-css-banner', 'clear-scss-banner']);
+
+/**
+ * @task: 'update-css-banner'
+ *
+ *	1. Replaces the contents of 'style.css' with a new project banner
  *
  */
-gulp.task('replace-package-name-style', ['clone-repo'], function() {
-	return replace(_pkgRenameStyleOpts, function(error, changes) {
-		if (error) {
-	    	console.error('Error occurred:', error); 
-	  	} else {
-			gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.pkg_name_style);
-	  		//console.log('Modified files:', changes.join(', ')); 
-		}
-	});
+gulp.task( 'update-css-banner', ['clone-repo'], function ( ) {
+	var pathCss 		= _environment.src + 'style.css';    
+	var textCss 		= fs.readFileSync(pathCss).toString();
+	var linesCss 		= textCss.split('\n');
+	var lineCountCss 	= linesCss.length; // get the line length of 'style.css'
+	//var _bannerInsert 		= _styleBanner.join("\n");
+
+    gulp.src( [ _environment.src + 'style.css' ])
+    .pipe( removeLine( { "style.css" : [ '1-' + lineCountCss ] } ) )
+    .pipe(header(_styleBanner.join("\n")))
+    .pipe( gulp.dest( _environment.src ) )
+    .pipe(notify('style.css banner updated'));
+});
+
+/**
+ * @task: 'clear-scss-banner'
+ *
+ *	1. Removes the default theme banner from 'style.scss' if not using Boostrap
+ *
+ */
+gulp.task( 'clear-scss-banner', ['clone-repo'], function ( ) {
+	if (!useWpBootstrap) {
+	    gulp.src( [ _environment.src + 'sass/style.scss' ])
+	    .pipe( removeLine( { "style.scss" : [ '1-22' ] } ) )
+	    .pipe( gulp.dest( _environment.src + 'sass/' ) )
+	    .pipe(notify('sass/style.scss banner removed'));
+	}
 });
 
 /**
  * @task: 'replace-package-name'
  *
- *	1. Replaces '_s' with the packageName in the project's remaining files
+ *	1. Replaces the default theme name with the packageName in the project's files
  *
  */
-gulp.task('replace-package-name', ['clone-repo'], function() {
+gulp.task('replace-package-name', ['update-style-banner'], function() {
 	return replace(_pkgRenameOpts, function(error, changes) {
 		if (error) {
 			console.error('Error occurred:', error); 
@@ -649,7 +648,7 @@ gulp.task('build', [
 	'load-languages',
 	'load-assets',
 	'load-themeFiles',
-//	'watch'
+	'watch'
 ]);
 
 /**
@@ -785,7 +784,7 @@ gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
 		.pipe(sourcemaps.write())
 	    .pipe(lineEndCorrect())
 		.pipe(gulp.dest(_style.dest))
-		.pipe(browserSync.stream({ match: '**/*.css' }))
+		.pipe(browserSync.stream({ match: '**/*.css' })) // @TODO: this will give anguish 
     	.pipe(notify({message: _notices.buildMsgs.load_styles, title: _product.name, onLast: true}));
 });
 

@@ -23,6 +23,7 @@
     "gulp-contains": "^1.1.0",
     "gulp-deporder": "^1.1.0",
     "gulp-git": "^2.5.0",
+    "gulp-header": "^2.0.1",
     "gulp-if": "^2.0.2",
     "gulp-imagemin": "^4.1.0",
     "gulp-inject-string": "^1.1.1",
