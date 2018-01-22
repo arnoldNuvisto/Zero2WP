@@ -9,7 +9,7 @@
  * @task "gulp build"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.6
+ * @version 0.0.7
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -17,15 +17,13 @@ Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
 
-//var projectName		= 'bootRun';
 var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers only
 var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
 var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
 var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
 var projectDesc 		= "<Place the description for the project here>"; // OPTIONAL
 var projectVersion		= '0.0.1'; // REQD // Use semantic versioning
-//var useWpBootstrap	= true; // 'false | true'
-var useWpBootstrap		= false; // REQD // 'false | true'
+var useBootstrap		= true; // REQD // 'false | true'
 
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
@@ -47,7 +45,7 @@ var newer    		= require('gulp-newer');
 var notify	        = require('gulp-notify');
 var plumber 		= require('gulp-plumber');
 var remoteSrc 		= require('gulp-remote-src');
-var removeLine 		= require( "gulp-remove-line" );
+var removeLine 		= require('gulp-remove-line');
 var rename 			= require('gulp-rename');
 var replace 		= require('replace-in-file');
 var stripLine  		= require('gulp-strip-line');
@@ -90,14 +88,14 @@ var _package 		= {
 	version 		: projectVersion
 };
 
-var _templateSrc 	= {
-	uScores : 'https://github.com/Automattic/_s.git',
-	bStrap 	: 'https://github.com/arnoldNuvisto/wp_bootstrap.git'
+var _bootstrap 	= {
+	srcURI 	: 'https://github.com/twbs/bootstrap/archive/',
+	srcFile	: ['v3.3.7.zip']
 };
 
-var _templateName 	= {
-	uScores : '_s',
-	bStrap 	: 'wp_bootstrap'
+var _template 		= {
+	src 	: 'https://github.com/Automattic/_s.git',
+	name 	: '_s'
 };
 
 var _theme 			= {
@@ -165,12 +163,11 @@ var _languages 		= {
 
 var _pkgRenameOpts 	= {
   files 	: _environment.src + '**/*',
-
   from 		: [
-	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores) + "-", "g"),
-	new RegExp("\\b " + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g"),
-	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores) + "_", "g"),
-	new RegExp("\\b" + (useWpBootstrap ?  _templateName.bStrap : _templateName.uScores), "g")
+	new RegExp("\\b" + _template.name + "-", "g"),
+	new RegExp("\\b " + _template.name, "g"),
+	new RegExp("\\b" + _template.name + "_", "g"),
+	new RegExp("\\b" + _template.name, "g")
 	],
   to 		: [
   	_package.name + '-', 
@@ -252,16 +249,12 @@ if (_appConfig.server.customPort !== null){
 }
 
 var _style 			= {
-	src 	: _environment.src + (useWpBootstrap ?  'node_modules/bootstrap/less/' : 'sass/'),
+	src 	: _environment.src + (useBootstrap ?  'bootstrap/less/' : 'sass/'),
 	dest 	: _environment.dev + _theme.dest + 'assets/css/'
 };
-if (useWpBootstrap) {
+if (useBootstrap) {
 	_style.compileReqs 		= '_bootstrap.less';
 }
-
-var _template 		= {
-	src 	: (useWpBootstrap ? _templateSrc.bStrap : _templateSrc.uScores)
-};
 
 var _themeFiles 	= {
 	src 	: _environment.src + '**/*.{php,css,png}',
@@ -332,6 +325,11 @@ var _notices 			= {
 		clone_repo		: 'The template has been cloned from Github for ' + _package.name,
 		pkg_name_style 	: 'The style files have been reset for ' + _package.name,
 		pkg_name_other 	: 'The package files have been reset for ' + _package.name
+	},
+	bsInstMsgs			: {
+		download 		: 'Bootstrap has been downloaded into the theme folder for ' + _package.name,
+		missing 		: _warning + 'Underscores needs to be installed first',
+		unzip 			: 'Bootstrap has been unzipped into the theme folder for ' + _package.name
 	},
 	wpInstMsgs			: {
 		download 		: 'WP has been downloaded into the dev folder for ' + _package.name,
@@ -534,9 +532,76 @@ gulp.task('install-template', [
  *
  */
 gulp.task('clone-repo', function(cb){
-	return git.clone(_template.src, {args: _environment.src}, function (err) {
+	return git.clone(_template, {args: _environment.src}, function (err) {
 		cb(err);
 		gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.clone_repo);
+	});
+});
+
+/**
+ * @task: 'download-bootstrap'
+ *
+ *	1. Retrieves a zip file containing version 3.3.7 of Bootstrap from Github
+ *	2. Places the zip file into the project's 'theme' folder for installation
+ *
+ */
+/**
+ * @TODO: integrate the bootstrap tasks into the workflow
+ */
+//gulp.task('download-bootstrap', ['clone-repo'], function (cb) {
+gulp.task('download-bootstrap', function (cb) {
+	return remoteSrc( _bootstrap.srcFile, { base: _bootstrap.srcURI } )
+		.pipe(plumber({ errorHandler: onError }))
+		.pipe(gulp.dest(_environment.src))
+    	.pipe(notify({message: _notices.bsInstMsgs.download, title: _product.name, onLast: true }));
+});
+
+/**
+ * @task: 'unzip-bootstrap'.
+ *
+ *	1. Unzips the downloaded file
+ *	2. Places the unzipped Bootstrap files into the project's 'theme' folder
+ * 	3. Removes uneeded files & deletes the downloaded zip file
+ *
+ */
+gulp.task('unzip-bootstrap', ['download-bootstrap'], function (cb) {
+	return gulp.src(_environment.src + 'v3.3.7.zip')
+		.pipe(plumber({ errorHandler: onError }))
+		.pipe(unzip())
+		.pipe(gulp.dest(_environment.src))
+    	.pipe(notify({message: _notices.bsInstMsgs.unzip, title: _product.name, onLast: true }));
+});
+
+/**
+ * @task: 'cleanup-bootstrap'.
+ *
+ *	1. Renames the Bootstrap folder
+ * 	2. Removes unecessary bootstrap files & folders
+ * 	3. Removes the sass folder
+ * 	3. Deletes the downloaded zip file
+ *
+ */
+gulp.task('cleanup-bootstrap', ['unzip-bootstrap'], function() {
+	fs.rename(_environment.src + 'bootstrap-3.3.7', _environment.src + 'bootstrap', function (err) {
+		if (err) {
+		  	throw err;
+		}
+		else
+		{
+			del([
+				_environment.src + 'bootstrap/dist/**',
+				_environment.src + 'bootstrap/docs/**',
+				_environment.src + 'bootstrap/grunt/**',
+				_environment.src + 'bootstrap/nuget/**',
+				_environment.src + 'bootstrap/*.*',
+				_environment.src + 'bootstrap/.*',
+				_environment.src + 'bootstrap/.*.*',
+				_environment.src + 'bootstrap/CNAME',
+				_environment.src + 'bootstrap/Gemfile',
+				_environment.src + 'sass/**',
+				_environment.src + 'v3.3.7.zip'
+				]);
+		}
 	});
 });
 
@@ -575,7 +640,7 @@ gulp.task( 'update-css-banner', ['clone-repo'], function ( ) {
  *
  */
 gulp.task( 'clear-scss-banner', ['clone-repo'], function ( ) {
-	if (!useWpBootstrap) {
+	if (!useBootstrap) {
 	    gulp.src( [ _environment.src + 'sass/style.scss' ])
 	    .pipe( removeLine( { "style.scss" : [ '1-22' ] } ) )
 	    .pipe( gulp.dest( _environment.src + 'sass/' ) )
@@ -774,10 +839,10 @@ gulp.task('compress-images', function() {
  *
  */
 gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
-	return gulp.src(_style.src + (useWpBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
+	return gulp.src(_style.src + (useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(sourcemaps.init())
-		.pipe( ( useWpBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
+		.pipe( ( useBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
 		.pipe(postcss([
 			autoprefixer(_target_browsers)
 		]))
