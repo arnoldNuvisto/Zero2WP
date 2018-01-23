@@ -7,16 +7,19 @@
  * @task "gulp install-wordpress" 
  * @task "gulp install-template"
  * @task "gulp build"
+ * @task "gulp"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.7
+ * @version 0.0.8
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Project Variables
 -------------------------------------------------------------------------------------------------- */
 // START EDITING
-
+/**
+ * @TODO: push to a project-specific config file
+ */
 var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers only
 var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
 var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
@@ -88,7 +91,7 @@ var _package 		= {
 	version 		: projectVersion
 };
 
-var _bootstrap 	= {
+var _bootstrap 		= {
 	srcURI 	: 'https://github.com/twbs/bootstrap/archive/',
 	srcFile	: ['v3.3.7.zip']
 };
@@ -120,7 +123,7 @@ var _enqueues		= {
 };
 
 var _injectEnqueues	= {
-	find 	: 'wp_enqueue_style( \'' + _package.name + '-style\', get_stylesheet_uri() );',
+	find 	: 'wp_enqueue_style( \'' + _package.title + '-style\', get_stylesheet_uri() );',
 	insert  : _enqueues.styles.theme + _enqueues.scripts.libs + _enqueues.scripts.header + _enqueues.scripts.footer,
 	test 	: 'wp_enqueue_style( \'' + _package.name + '-theme-style\'',
 	strip	:
@@ -133,6 +136,12 @@ var _injectEnqueues	= {
 var _fonts 			= {
 	src 	: _environment.src + 'fonts/',
 	dest 	: _environment.dev + _theme.dest + 'assets/fonts/'
+};
+
+var _fontPathRenameOpts 	= {
+  files 	: _environment.src + 'bootstrap/less/variables.less',
+  from 		: [ new RegExp("..\/fonts\/", "g") ],
+  to 		: [ "../assets/fonts/" ]
 };
 
 var _img 			= {
@@ -170,50 +179,13 @@ var _pkgRenameOpts 	= {
 	new RegExp("\\b" + _template.name, "g")
 	],
   to 		: [
-  	_package.name + '-', 
-  	' ' + _package.name, 
-  	_package.name + '_',
-  	_package.name
+  	_package.title + '-', 
+  	' ' + _package.title, 
+  	_package.title + '_',
+  	_package.title
   ]
 };
 
-
-/*
-var plugins 		= {
-	src 	: _environment.src + 'plugins/', 
-	dest 	: _environment.dev + 'wordpress/wp-content/plugins/'
-};
-*/
-
-/**
- * @TODO: consider adding postcss-assets to the style build
- * see: https://github.com/borodean/postcss-assets
- */
-/**
-	Legend: Option,	Description, Default
-	> basePath, Root directory of the project, "."
-	> baseUrl, URL of the project when running the web server, "/"
-	> cachebuster, If cache should be busted: Pass a function to define custom busting strategy, "false"
-	> loadPaths, Specific directories in which to look for the files, "[]"
-	> relative, Directory to relate to when resolving URLs: When true, relates to the input file; When false, disables relative URLs, "false"
-	> cache, When true, if the input file not been modifed, use the results before cached, "false"
-*/
-/**
-	var _postcssAssetsOps 	= {
-		basePath 		: _environment.dev, // the directory where PostCSS Assets is executed... all URLs and load paths are relative to this
-	    baseUrl 		: _theme.dest, // the directory from which the server runs the project
-	    cachebuster 	: true,
-		loadPaths 		: [
-			_img.src,
-			_fonts.src
-		]
-	};
-	gulp.task('list', function() {
-		gutil.log('loadPaths: ' + _postcssAssetsOps.loadPaths + ' Specific directories in which to look for asset files');
-		gutil.log('basePath: ' + _postcssAssetsOps.basePath + ' Root directory of the project');
-		gutil.log('baseUrl: ' + _postcssAssetsOps.baseUrl + ' URL of the project when running the web server');
-	});
-*/
 var _sassOpts 		= {
     outputStyle     : 'nested', // (nested | expanded | compact | compressed)
     imagePath       : _img.dest,
@@ -223,7 +195,7 @@ var _sassOpts 		= {
 	indentWidth		: '1' // (maximum value: 10)
 };
 
-var _styleBanner 			= [
+var _styleBanner 	= [
 	"/*!",
 	"Theme Name: "	+ _package.title,
 	"Theme URI: "	+ (_package.URI ? _package.URI : ""),
@@ -300,43 +272,43 @@ var	_warning			= '\x1b[41mHey you!\x1b[0m';
 
 var _notices 			= {
 	buildMsgs			: {
-		load_themeFiles	: 'Loaded theme files to the dev folder for ' + _package.name,
-		load_includes	: 'Loaded include files to the dev folder for ' + _package.name,
-		load_languages	: 'Loaded language files to the dev folder for ' + _package.name,
-		load_plugins	: 'Loaded plugins to the dev folder for ' + _package.name,
-		load_styles		: 'Processed, compressed, and loaded CSS files to the dev folder for ' + _package.name,
-		load_fonts		: 'Loaded font files to the dev folder for ' + _package.name,
-		load_images		: 'Compressed and loaded new images files to the dev folder for ' + _package.name,
-		process_head_js	: 'Processed, compressed, and loaded custom header JS files to the dev folder for ' + _package.name,
-		process_foot_js	: 'Processed, compressed, and loaded custom footer JS files to the dev folder for ' + _package.name,
-		process_libs_js	: 'Processed, compressed, and loaded vendor JS libraries to the dev folder for ' + _package.name,
+		load_themeFiles	: 'Loaded theme files to the dev folder for ' + _package.title,
+		load_includes	: 'Loaded include files to the dev folder for ' + _package.title,
+		load_languages	: 'Loaded language files to the dev folder for ' + _package.title,
+		load_plugins	: 'Loaded plugins to the dev folder for ' + _package.title,
+		load_styles		: 'Processed, compressed, and loaded CSS files to the dev folder for ' + _package.title,
+		load_fonts		: 'Loaded font files to the dev folder for ' + _package.title,
+		load_images		: 'Compressed and loaded new images files to the dev folder for ' + _package.title,
+		process_head_js	: 'Processed, compressed, and loaded custom header JS files to the dev folder for ' + _package.title,
+		process_foot_js	: 'Processed, compressed, and loaded custom footer JS files to the dev folder for ' + _package.title,
+		process_libs_js	: 'Processed, compressed, and loaded vendor JS libraries to the dev folder for ' + _package.title,
 		update_enqueues	: {
-			missing 	: 'The functions.php file for ' + _package.name + ' could not be read',
-			ok 			: 'The enqueues for ' + _package.name + ' are already up to date',
-			updated 	: 'The enqueues for ' + _package.name + ' have been updated'
+			missing 	: 'The functions.php file for ' + _package.title + ' could not be read',
+			ok 			: 'The enqueues for ' + _package.title + ' are already up to date',
+			updated 	: 'The enqueues for ' + _package.title + ' have been updated'
 		},
 		disable_cron 	: {
-			yes			: 'WP_CRON has been disabled in the wp-config.php file for ' + _package.name,
-			no 			: 'WP_CRON was already disabled in the wp-config.php file for ' + _package.name,
-			missing 	: 'The wp-config.php file for ' + _package.name + ' could not be read'
+			yes			: 'WP_CRON has been disabled in the wp-config.php file for ' + _package.title,
+			no 			: 'WP_CRON was already disabled in the wp-config.php file for ' + _package.title,
+			missing 	: 'The wp-config.php file for ' + _package.title + ' could not be read'
 		}
 	},
 	tempInstMsgs		: {
-		clone_repo		: 'The template has been cloned from Github for ' + _package.name,
-		pkg_name_style 	: 'The style files have been reset for ' + _package.name,
-		pkg_name_other 	: 'The package files have been reset for ' + _package.name
+		clone_repo		: 'The template has been cloned from Github for ' + _package.title,
+		pkg_name_style 	: 'The style files have been reset for ' + _package.title,
+		pkg_name_other 	: 'The package files have been reset for ' + _package.title
 	},
 	bsInstMsgs			: {
-		download 		: 'Bootstrap has been downloaded into the theme folder for ' + _package.name,
+		download 		: 'Bootstrap has been downloaded into the theme folder for ' + _package.title,
 		missing 		: _warning + 'Underscores needs to be installed first',
-		unzip 			: 'Bootstrap has been unzipped into the theme folder for ' + _package.name
+		unzip 			: 'Bootstrap has been unzipped into the theme folder for ' + _package.title
 	},
 	wpInstMsgs			: {
-		download 		: 'WP has been downloaded into the dev folder for ' + _package.name,
+		download 		: 'WP has been downloaded into the dev folder for ' + _package.title,
 		missing 		: _warning + 'Wordpress needs to be installed first',
-		ready 			: 'A new WP project is ready for ' + _package.name,
+		ready 			: 'A new WP project is ready for ' + _package.title,
 		thx				: 'Thanks for using ' + _product.name + ' ' + _product.url,
-		unzip 			: 'WP has been unzipped into the dev folder for ' + _package.name
+		unzip 			: 'WP has been unzipped into the dev folder for ' + _package.title
 	}
 };
 
@@ -501,6 +473,10 @@ gulp.task('disable-cron', function () {
  *
  * - install-template (the main task runner)
  * - clone-repo
+ * - install-bootstrap (sub-task runner)
+ * - download-bootstrap 
+ * - unzip-bootstrap
+ * - cleanup-bootstrap
  * - update-style-banner (sub-task runner)
  * - update-css-banner
  * - clear-scss-banner
@@ -512,13 +488,15 @@ gulp.task('disable-cron', function () {
  * @task: 'install-template'
  *
  *	1. Clones the specified template from GitHub
- *	2. Initiate update of the theme's banner in 'style.css' and 'sass/style.scss'
- *	3. Updates the template name in the theme's remaining files
+ * 	2. Initiates optional bootstrap installation
+ *	3. Initiates update of the theme's banner in 'style.css' and 'sass/style.scss'
+ *	4. Updates the template name in the theme's remaining files
  * 	5. Deletes the downloaded theme's default '.github' file
  *
  */
 gulp.task('install-template', [
 	'clone-repo', 
+	'install-bootstrap',
 	'update-style-banner', 
 	'replace-package-name', 
 	'cleanup-template-files'
@@ -532,44 +510,55 @@ gulp.task('install-template', [
  *
  */
 gulp.task('clone-repo', function(cb){
-	return git.clone(_template, {args: _environment.src}, function (err) {
+	return git.clone(_template.src, {args: _environment.src}, function (err) {
 		cb(err);
 		gutil.log(_product.name + ' - ' + _notices.tempInstMsgs.clone_repo);
 	});
 });
 
 /**
+ * @task: 'install-bootstrap'
+ *
+ *	1. Runs 'download-bootstrap', 'unzip-bootstrap' & 'cleanup-bootstrap' tasks
+ *
+ */
+gulp.task('install-bootstrap', ['download-bootstrap', 'unzip-bootstrap', 'init-bootstrap'] );
+
+/**
  * @task: 'download-bootstrap'
  *
- *	1. Retrieves a zip file containing version 3.3.7 of Bootstrap from Github
+ *	1. Optionally retrieves a zip file containing version 3.3.7 of Bootstrap from Github
  *	2. Places the zip file into the project's 'theme' folder for installation
  *
  */
-/**
- * @TODO: integrate the bootstrap tasks into the workflow
- */
-//gulp.task('download-bootstrap', ['clone-repo'], function (cb) {
-gulp.task('download-bootstrap', function (cb) {
-	return remoteSrc( _bootstrap.srcFile, { base: _bootstrap.srcURI } )
+gulp.task('download-bootstrap', ['clone-repo'], function ( ) {
+	if (useBootstrap) {
+		return remoteSrc( _bootstrap.srcFile, { base: _bootstrap.srcURI } )
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(gulp.dest(_environment.src))
     	.pipe(notify({message: _notices.bsInstMsgs.download, title: _product.name, onLast: true }));
+    } else { 
+    	return;
+    }
 });
 
 /**
  * @task: 'unzip-bootstrap'.
  *
- *	1. Unzips the downloaded file
+ *	1. Unzips the optionally downloaded file
  *	2. Places the unzipped Bootstrap files into the project's 'theme' folder
- * 	3. Removes uneeded files & deletes the downloaded zip file
  *
  */
-gulp.task('unzip-bootstrap', ['download-bootstrap'], function (cb) {
-	return gulp.src(_environment.src + 'v3.3.7.zip')
+gulp.task('unzip-bootstrap', ['download-bootstrap'], function ( ) {
+	if (useBootstrap) {
+		return gulp.src(_environment.src + 'v3.3.7.zip')
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(unzip())
 		.pipe(gulp.dest(_environment.src))
     	.pipe(notify({message: _notices.bsInstMsgs.unzip, title: _product.name, onLast: true }));
+    } else { 
+    	return;
+    }
 });
 
 /**
@@ -578,53 +567,71 @@ gulp.task('unzip-bootstrap', ['download-bootstrap'], function (cb) {
  *	1. Renames the Bootstrap folder
  * 	2. Removes unecessary bootstrap files & folders
  * 	3. Removes the sass folder
- * 	3. Deletes the downloaded zip file
+ * 	4. Deletes the downloaded zip file
+ * 	5. Renames 'bootstrap.less' to '_bootstrap.less'
  *
  */
-gulp.task('cleanup-bootstrap', ['unzip-bootstrap'], function() {
-	fs.rename(_environment.src + 'bootstrap-3.3.7', _environment.src + 'bootstrap', function (err) {
-		if (err) {
-		  	throw err;
-		}
-		else
-		{
-			del([
-				_environment.src + 'bootstrap/dist/**',
-				_environment.src + 'bootstrap/docs/**',
-				_environment.src + 'bootstrap/grunt/**',
-				_environment.src + 'bootstrap/nuget/**',
-				_environment.src + 'bootstrap/*.*',
-				_environment.src + 'bootstrap/.*',
-				_environment.src + 'bootstrap/.*.*',
-				_environment.src + 'bootstrap/CNAME',
-				_environment.src + 'bootstrap/Gemfile',
-				_environment.src + 'sass/**',
-				_environment.src + 'v3.3.7.zip'
-				]);
-		}
-	});
+gulp.task('init-bootstrap', ['unzip-bootstrap'], function( ) {
+	if (useBootstrap) {
+		fs.rename(_environment.src + 'bootstrap-3.3.7', _environment.src + 'bootstrap', function (err) {
+			if (err) {
+				throw err;
+			} else {
+				//console.log('source.txt was copied to destination.txt');
+				fs.copyFile(_environment.src + 'bootstrap/dist/js/bootstrap.js', _environment.src + 'js/bootstrap.js', function (err) {
+					if (err) throw err;
+					//console.log('source.txt was copied to destination.txt');
+				});
+				fs.rename(_environment.src + 'bootstrap/fonts', _environment.src + 'fonts/', function (err) {
+					if (err) throw err;
+					//console.log('source.txt was copied to destination.txt');
+				});
+				replace(_fontPathRenameOpts, function(err, changes) {
+					if (err) throw err;
+				});
+				fs.rename(_environment.src + 'bootstrap/less/bootstrap.less', _environment.src + 'bootstrap/less/_bootstrap.less', function (err) {
+					if (err) throw err;
+					//console.log('source.txt was copied to destination.txt');
+				});
+				del([
+					_environment.src + 'bootstrap/dist/**',
+					_environment.src + 'bootstrap/docs/**',
+					_environment.src + 'bootstrap/grunt/**',
+					_environment.src + 'bootstrap/nuget/**',
+					_environment.src + 'bootstrap/js/**',
+					_environment.src + 'bootstrap/*.*',
+					_environment.src + 'bootstrap/.*',
+					_environment.src + 'bootstrap/.*.*',
+					_environment.src + 'bootstrap/CNAME',
+					_environment.src + 'bootstrap/Gemfile',
+					_environment.src + 'sass/**',
+					_environment.src + 'v3.3.7.zip'
+					]
+				);
+			}
+		});
+	}
+	return;
 });
 
 /**
  * @task: 'update-style-banner'
  *
- * 	1. Replaces the contents of 'style.css' with a WP-approved project banner
- * 	2. Removes the default project banner in style.scss
+ * 	1. Runs 'update-css-banner' & 'clear-scss-banner'
  */
 gulp.task( 'update-style-banner', ['update-css-banner', 'clear-scss-banner']);
 
 /**
  * @task: 'update-css-banner'
  *
- *	1. Replaces the contents of 'style.css' with a new project banner
+ *	1. Replaces the contents of 'style.css' with a new WP-approved project banner
  *
  */
 gulp.task( 'update-css-banner', ['clone-repo'], function ( ) {
 	var pathCss 		= _environment.src + 'style.css';    
 	var textCss 		= fs.readFileSync(pathCss).toString();
 	var linesCss 		= textCss.split('\n');
-	var lineCountCss 	= linesCss.length; // get the line length of 'style.css'
-	//var _bannerInsert 		= _styleBanner.join("\n");
+	var lineCountCss 	= linesCss.length;
 
     gulp.src( [ _environment.src + 'style.css' ])
     .pipe( removeLine( { "style.css" : [ '1-' + lineCountCss ] } ) )
@@ -636,7 +643,7 @@ gulp.task( 'update-css-banner', ['clone-repo'], function ( ) {
 /**
  * @task: 'clear-scss-banner'
  *
- *	1. Removes the default theme banner from 'style.scss' if not using Boostrap
+ *	1. Optionally removes the default theme banner from 'style.scss' if not using Boostrap
  *
  */
 gulp.task( 'clear-scss-banner', ['clone-repo'], function ( ) {
@@ -699,7 +706,6 @@ gulp.task('cleanup-template-files', ['clone-repo'], function () {
  * - js-enqueues
  * - style-enqueues
  * - default (a sub-task runner)
- * - watch
  *
  */
 /**
@@ -712,8 +718,8 @@ gulp.task('build', [
 	'load-includes',
 	'load-languages',
 	'load-assets',
-	'load-themeFiles',
-	'watch'
+	'load-themeFiles'
+//	'watch'
 ]);
 
 /**
@@ -825,19 +831,6 @@ gulp.task('compress-images', function() {
  * 	7. Posts a notice to confirm that css processing is complete
  *
  */
-/**
- * See: https://www.sitepoint.com/postcss-mythbusting/
- * : look into adding: https://github.com/SlexAxton/css-colorguard
- * : look into adding: https://stylelint.io/
- * : look into adding: https://github.com/borodean/postcss-assets
- * ... 	
-	assets({
-		loadPaths: _postcssAssetsOps.loadPaths,
-			basePath: _postcssAssetsOps.basePath,
-			baseUrl: _postcssAssetsOps.baseUrl
-	}),
- *
- */
 gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
 	return gulp.src(_style.src + (useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
 		.pipe(plumber({ errorHandler: onError }))
@@ -848,8 +841,9 @@ gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
 		]))
 		.pipe(sourcemaps.write())
 	    .pipe(lineEndCorrect())
+	    .pipe(rename(_package.name + '-theme-style.css'))
 		.pipe(gulp.dest(_style.dest))
-		.pipe(browserSync.stream({ match: '**/*.css' })) // @TODO: this will give anguish 
+		.pipe(browserSync.stream({ match: '**/*.css' }))
     	.pipe(notify({message: _notices.buildMsgs.load_styles, title: _product.name, onLast: true}));
 });
 
@@ -983,9 +977,9 @@ gulp.task('insert-enqueues', ['load-assets'], function () {
 		{
 			return gulp.src([_environment.src + 'functions.php'], {base: _environment.src})
 			.pipe(plumber({ errorHandler: onError }))
-			.pipe(inject.after(_injectEnqueues.find, _injectEnqueues.insert ))
-			.pipe(stripLine([_injectEnqueues.strip.navScript, 'use strict']))
-			.pipe(stripLine([_injectEnqueues.strip.skipLinkScript, 'use strict']))
+			.pipe(inject.after(_injectEnqueues.find, _injectEnqueues.insert )) // this borks
+			.pipe(stripLine([_injectEnqueues.strip.navScript, 'use strict'])) // but this works
+			.pipe(stripLine([_injectEnqueues.strip.skipLinkScript, 'use strict'])) // and so does this
 		    .pipe(gulp.dest(_environment.src))
 	    	.pipe(notify({message: _notices.buildMsgs.update_enqueues.updated, title: _product.name, onLast: true}));
 
@@ -1114,3 +1108,53 @@ Plugins Tasks
 		}
 	});
 */
+
+/*
+var plugins 		= {
+	src 	: _environment.src + 'plugins/', 
+	dest 	: _environment.dev + 'wordpress/wp-content/plugins/'
+};
+*/
+
+/**
+ * @TODO: consider adding postcss-assets to the style build
+ * see: https://github.com/borodean/postcss-assets
+ */
+/**
+	Legend: Option,	Description, Default
+	> basePath, Root directory of the project, "."
+	> baseUrl, URL of the project when running the web server, "/"
+	> cachebuster, If cache should be busted: Pass a function to define custom busting strategy, "false"
+	> loadPaths, Specific directories in which to look for the files, "[]"
+	> relative, Directory to relate to when resolving URLs: When true, relates to the input file; When false, disables relative URLs, "false"
+	> cache, When true, if the input file not been modifed, use the results before cached, "false"
+*/
+/**
+	var _postcssAssetsOps 	= {
+		basePath 		: _environment.dev, // the directory where PostCSS Assets is executed... all URLs and load paths are relative to this
+	    baseUrl 		: _theme.dest, // the directory from which the server runs the project
+	    cachebuster 	: true,
+		loadPaths 		: [
+			_img.src,
+			_fonts.src
+		]
+	};
+	gulp.task('list', function() {
+		gutil.log('loadPaths: ' + _postcssAssetsOps.loadPaths + ' Specific directories in which to look for asset files');
+		gutil.log('basePath: ' + _postcssAssetsOps.basePath + ' Root directory of the project');
+		gutil.log('baseUrl: ' + _postcssAssetsOps.baseUrl + ' URL of the project when running the web server');
+	});
+*/
+/**
+ * See: https://www.sitepoint.com/postcss-mythbusting/
+ * : look into adding: https://github.com/SlexAxton/css-colorguard
+ * : look into adding: https://stylelint.io/
+ * : look into adding: https://github.com/borodean/postcss-assets
+ * ... 	
+	assets({
+		loadPaths: _postcssAssetsOps.loadPaths,
+			basePath: _postcssAssetsOps.basePath,
+			baseUrl: _postcssAssetsOps.baseUrl
+	}),
+ *
+ */

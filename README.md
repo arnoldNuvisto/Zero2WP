@@ -1,4 +1,4 @@
-# Zero2WP v0.0.7
+# Zero2WP v0.0.8
 A build system for automating the WordPress development workflow.
 
 ## Introduction
@@ -8,6 +8,7 @@ Zero2WP is a robust build system for WordPress theme, plugin, and site developer
 - Run multiple projects simultaneously from a single workbench
 - Install the latest version of WordPress for each project
 - Clone the latest version of Underscores for each project
+- Optionally integrate Bootstrap3 w/Less
 - Sass/Less to CSS conversion, error catching, Autoprefixing, Sourcemaps, minify & correct line-endings
 - Lint, order, concatenate, uglify & correct line-endings in JS
 - Compress PNG, JPEG, GIF & SVG images
@@ -70,9 +71,9 @@ var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers on
 var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
 var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
 var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
-var projectDesc 		= ""; // OPTIONAL // add textual description
-var projectVersion		= '0.0.1'; // REQD // use semantic versioning
-var useWpBootstrap		= false; // REQD // 'false | true'
+var projectDesc 		= "<Place the description for the project here>"; // OPTIONAL
+var projectVersion		= '0.0.1'; // REQD // Use semantic versioning
+var useBootstrap		= true; // REQD // 'false | true'
 
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
@@ -97,7 +98,8 @@ gulp install-template
 ```
 
 - This will clone the latest version of Underscores from GitHub and install it into a new folder for your theme in **'Zero2WP/themes/'** 
-- Note this will also update the style.css and style.scss with a new project banner
+- This will also update the style.css and style.scss with a new project banner
+- Optionally, this will also install and initialize **Bootstrap 3.3.7 with Less** 
 
 
 ### 2.4 Run the Build
@@ -109,28 +111,20 @@ gulp build
 ```
 - This will push the project's theme files into the themes directory of the project's Wordpress install, launch a PHP server, and then open Wordpress in your browser.
 
-**Important:** 
-- When you run **'gulp build'**, Zero2WP also activates a 'watch' task that listens for changes to project files in **'Zero2Wp/themes/'**
-- Whenever a change is detected, this task automatically updates both the dev folder and the browser window.
+## 3. Launch the Project
 
-### 2.5 Activate Wordpress
-
-At this point, you'll need to provide Wordpress with database connection details as well as set a project username and password. Once this has been completed, Wordpress will launch into the admin section. 
-
-From here, simply activate the newly installed theme and you're good to go.
-
-## 3. Update a Project
-
-When launching a new project, Zero2WP also launches a PHP server that lets you immediately see project updates in the browser. But what if you terminate the session (such as when you're done for the day) and need to 'relaunch' the server?
-
-The solution is simple. Just run this one-word command and you're good to go:
+Now that everything is place, we're ready to launch the project. Run this command:
 
 ```
 gulp
 ```
-- This launches the previously-mentioned 'watch' task, which automatically sets up a new server session for you.
 
-Note that you could also just run 'gulp build' again. However this will force upload of the entire set of theme files, which is slower and less efficient. Best to stick with just 'gulp'.
+- This launches a 'watch' task, which automatically sets up a new server session for you and launches the project in your browser
+- This task will also automatically update both the dev folder and the browser window whenever a change in the source files is detected
+
+**IMPORTANT** 
+- The first time you run 'gulp', you'll need to provide Wordpress with database connection details and set a project username and password. Once this has been completed, Wordpress will launch into the admin section. From here, simply activate the newly installed theme and you're good to go.
+
 
 ## 4. Package a Project
 
