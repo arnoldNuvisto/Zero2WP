@@ -54,9 +54,9 @@ npm install
 
 - This will take a few minutes, so go grab a coffee - when you return, Zero2WP will be installed and ready to go!
 
-## 2. Launch a Project
+## 2. Start a Project
 
-Now that Zero2WP is up and running, the next step is to launch a new project.
+Now that Zero2WP is up and running, the next step is to start a new project.
 
 ### 2.1 Set the Project Details 
 
@@ -120,18 +120,18 @@ Next, push the project's theme files into the project's dev directory. Run this 
 ```
 gulp build
 ```
-- This will push the project's theme files into the themes directory of the project's Wordpress install.
+- This will compile and copy the project's theme files into the themes directory of the project's Wordpress installation.
 
 ## 3. Launch the Project
 
-Now that everything is place, we're ready to launch the project. Run this command:
+Now that everything is place, we're ready to launch the new project. Run this command:
 
 ```
 gulp
 ```
 
-- This command launches a 'watch' task, which automatically launches a PHP server and then opens Wordpress in your browser.
-- The watch task will also automatically update both the project's dev folder and the browser window whenever a change in the source files is detected.
+- This command initiates a series of tasks to automatically launch a PHP server and then open Wordpress in your browser.
+- This same task will also automatically update the project's dev folder as well as the browser window whenever a change in the source files is detected.
 
 **IMPORTANT** 
 - The first time you run 'gulp', you'll need to provide Wordpress with database connection details and set a project username and password. Once this has been completed, Wordpress will launch into the admin section. From there, simply activate the newly installed theme and you're good to go.
