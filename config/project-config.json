@@ -1,0 +1,18 @@
+{
+	"testBase"		: {
+		"URI" 			: false,
+		"license" 		: "GNU General Public License v2 or later",
+		"licenseURI" 	: "http://www.gnu.org/licenses/gpl-2.0.html",
+		"description" 	: "Test project with _s & Bootstrap",
+		"version"		: "0.0.1",
+		"useBootstrap"	: true
+	},
+	"testBase2"		: {
+		"URI" 			: false,
+		"license" 		: "GNU General Public License v2 or later",
+		"licenseURI" 	: "http://www.gnu.org/licenses/gpl-2.0.html",
+		"description" 	: "Test project with _s strict",
+		"version"		: "0.0.1",
+		"useBootstrap"	: false
+	}
+}

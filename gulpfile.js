@@ -10,24 +10,20 @@
  * @task "gulp"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.8
+ * @version 0.0.9
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
 Project Variables
 -------------------------------------------------------------------------------------------------- */
-// START EDITING
+// BEFORE YOU START
 /**
- * @TODO: push to a project-specific config file
+ * 1) Open 'project-config.json', add a new entry for your project, and save the file. 
+ * 2) Next, copy the project's name below EXACTLY as it appears in 'project-config.json'
+ * 3) You're good to go!
  */
-var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers only
-var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
-var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
-var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
-var projectDesc 		= "<Place the description for the project here>"; // OPTIONAL
-var projectVersion		= '0.0.1'; // REQD // Use semantic versioning
-var useBootstrap		= true; // REQD // 'false | true'
-
+// START EDITING
+var projectName			= "testBase2"; // REQD // Upper & lowercase letters & numbers only
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -81,15 +77,16 @@ Project Constants
 -------------------------------------------------------------------------------------------------- */
 var _appConfig 		= JSON.parse(fs.readFileSync('./config/app-config.json'));
 
+var _projConfig 	= JSON.parse(fs.readFileSync('./config/project-config.json'));
+
+var _project 		= _projConfig[projectName];
+
 var _package 		= {
 	title 			: projectName,
-	name 			: projectName.toLowerCase(),
-	URI 			: projectURI, // fyi, can be 'false'
-	license 		: projectLicense,
-	licenseURI 		: projectLicenseURI,
-	description 	: projectDesc,
-	version 		: projectVersion
+	name 			: projectName.toLowerCase()
 };
+
+var _useBootstrap = _project.useBootstrap;
 
 var _bootstrap 		= {
 	srcURI 	: 'https://github.com/twbs/bootstrap/archive/',
@@ -195,21 +192,6 @@ var _sassOpts 		= {
 	indentWidth		: '1' // (maximum value: 10)
 };
 
-var _styleBanner 	= [
-	"/*!",
-	"Theme Name: "	+ _package.title,
-	"Theme URI: "	+ (_package.URI ? _package.URI : ""),
-	"Author: "		+ _appConfig.developer.name,
-	"Author URI: "	+ _appConfig.developer.url,
-	"Description: "	+ _package.description,
-	"Version: "		+ _package.version,
-	"License: "		+ _package.license,
-	"License URI: "	+ _package.licenseURI,
-	"Text Domain: "	+ _package.name,
-	"Tags: ",
-	"*/\n"
-];
-
 var _server 		= {
 	proxy 			: _appConfig.server.host + '/Zero2WP/dev/'  + _package.name + '/wordpress/',
 	open 			: 'external', 
@@ -221,12 +203,27 @@ if (_appConfig.server.customPort !== null){
 }
 
 var _style 			= {
-	src 	: _environment.src + (useBootstrap ?  'bootstrap/less/' : 'sass/'),
+	src 	: _environment.src + (_useBootstrap ?  'bootstrap/less/' : 'sass/'),
 	dest 	: _environment.dev + _theme.dest + 'assets/css/'
 };
-if (useBootstrap) {
+if (_useBootstrap) {
 	_style.compileReqs 		= '_bootstrap.less';
 }
+
+var _styleBanner 	= [
+	"/*!",
+	"Theme Name: "	+ _package.title,
+	"Theme URI: "	+ (_project.URI ? _project.URI : ""),// fyi, can be 'false'
+	"Author: "		+ _appConfig.developer.name,
+	"Author URI: "	+ _appConfig.developer.url,
+	"Description: "	+ _project.description,
+	"Version: "		+ _project.version,
+	"License: "		+ _project.license,
+	"License URI: "	+ _project.licenseURI,
+	"Text Domain: "	+ _package.name,
+	"Tags: ",
+	"*/\n"
+];
 
 var _themeFiles 	= {
 	src 	: _environment.src + '**/*.{php,css,png}',
@@ -532,7 +529,7 @@ gulp.task('install-bootstrap', ['download-bootstrap', 'unzip-bootstrap', 'init-b
  *
  */
 gulp.task('download-bootstrap', ['clone-repo'], function ( ) {
-	if (useBootstrap) {
+	if (_useBootstrap) {
 		return remoteSrc( _bootstrap.srcFile, { base: _bootstrap.srcURI } )
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(gulp.dest(_environment.src))
@@ -550,7 +547,7 @@ gulp.task('download-bootstrap', ['clone-repo'], function ( ) {
  *
  */
 gulp.task('unzip-bootstrap', ['download-bootstrap'], function ( ) {
-	if (useBootstrap) {
+	if (_useBootstrap) {
 		return gulp.src(_environment.src + 'v3.3.7.zip')
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(unzip())
@@ -572,7 +569,7 @@ gulp.task('unzip-bootstrap', ['download-bootstrap'], function ( ) {
  *
  */
 gulp.task('init-bootstrap', ['unzip-bootstrap'], function( ) {
-	if (useBootstrap) {
+	if (_useBootstrap) {
 		fs.rename(_environment.src + 'bootstrap-3.3.7', _environment.src + 'bootstrap', function (err) {
 			if (err) {
 				throw err;
@@ -647,7 +644,7 @@ gulp.task( 'update-css-banner', ['clone-repo'], function ( ) {
  *
  */
 gulp.task( 'clear-scss-banner', ['clone-repo'], function ( ) {
-	if (!useBootstrap) {
+	if (!_useBootstrap) {
 	    gulp.src( [ _environment.src + 'sass/style.scss' ])
 	    .pipe( removeLine( { "style.scss" : [ '1-22' ] } ) )
 	    .pipe( gulp.dest( _environment.src + 'sass/' ) )
@@ -832,10 +829,10 @@ gulp.task('compress-images', function() {
  *
  */
 gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
-	return gulp.src(_style.src + (useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
+	return gulp.src(_style.src + (_useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(sourcemaps.init())
-		.pipe( ( useBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
+		.pipe( ( _useBootstrap ? less() : sass(_sassOpts).on('error', sass.logError) ) )
 		.pipe(postcss([
 			autoprefixer(_target_browsers)
 		]))

@@ -5,7 +5,8 @@ A build system for automating the WordPress development workflow.
 Zero2WP is a robust build system for WordPress theme, plugin, and site developers. Zero2WP uses Nodejs, Gulp, BrowserSync, and PhP's integrated web server to track changes and instantly auto-reload your browsers. 
 
 ### Features
-- Run multiple projects simultaneously from a single workbench
+Zero2WP lets you run multiple projects simultaneously from a single workbench:
+
 - Install the latest version of WordPress for each project
 - Clone the latest version of Underscores for each project
 - Optionally integrate Bootstrap3 w/Less
@@ -57,9 +58,25 @@ npm install
 
 Now that Zero2WP is up and running, the next step is to launch a new project.
 
-### 2.1 Set the Project Name 
+### 2.1 Set the Project Details 
 
-Still working in the terminal window, navigate to the root of the Zero2WP folder and open **'gulpfile.js'** for editing. Locate the **'Project Variables'** section, update the **'projectName'** with the title for your project as shown below, then save the file.
+In the terminal window, navigate to the root of the Zero2WP folder and open **'config/project-config.json'** for editing. Now add the project details using the following example as a guideline. Close and save the file.
+
+```javascript
+{
+	"testRun"		: {
+		"URI" 			: false,
+		"license" 		: "GNU General Public License v2 or later",
+		"licenseURI" 	: "http://www.gnu.org/licenses/gpl-2.0.html",
+		"description" 	: "Test project with _s & Bootstrap",
+		"version"		: "0.0.1",
+		"useBootstrap"	: true
+	}
+}
+```
+- FYI, you can add as many projects to this file as you wish.
+
+Still in the terminal window, go back to Zero2WP's root folder and open **'gulpfile.js'** for editing. Locate the **'Project Variables'** section, update the **'projectName'** with the title for your project as shown below, then save the file.
 
 ```javascript
 /* -------------------------------------------------------------------------------------------------
@@ -68,17 +85,11 @@ Project Variables
 // START EDITING
 
 var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers only
-var projectURI 			= false; // REQD // false | 'http://<project-domain-name-here>.com'
-var projectLicense 		= "GNU General Public License v2 or later"; // REQD // change as needed
-var projectLicenseURI 	= "http://www.gnu.org/licenses/gpl-2.0.html"; // REQD // change as needed
-var projectDesc 		= "<Place the description for the project here>"; // OPTIONAL
-var projectVersion		= '0.0.1'; // REQD // Use semantic versioning
-var useBootstrap		= true; // REQD // 'false | true'
 
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 ```
-- These vars will tell Zero2WP everything it needs to know about your project so it can correctly name directories and files, customize the default theme, and more.
+- This var, taken together with the details in the project config file, will tell Zero2WP everything it needs to know about your project so it can correctly name directories and files, customize the default theme, and more.
 
 ### 2.2 Install WordPress
 
@@ -119,8 +130,8 @@ Now that everything is place, we're ready to launch the project. Run this comman
 gulp
 ```
 
-- This launches a 'watch' task, which automatically sets up a new server session for you and launches the project in your browser
-- This task will also automatically update both the dev folder and the browser window whenever a change in the source files is detected
+- This command launches a 'watch' task, which automatically sets up a new server session for you and launches the project in your browser.
+- This task will also automatically update both the dev folder and the browser window whenever a change in the source files is detected.
 
 **IMPORTANT** 
 - The first time you run 'gulp', you'll need to provide Wordpress with database connection details and set a project username and password. Once this has been completed, Wordpress will launch into the admin section. From here, simply activate the newly installed theme and you're good to go.
