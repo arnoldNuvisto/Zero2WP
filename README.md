@@ -115,12 +115,12 @@ gulp install-template
 
 ### 2.4 Run the Build
 
-Next, push the project's theme files into the project's dev directory, and launch Wordpress. Run this command:
+Next, push the project's theme files into the project's dev directory. Run this command:
 
 ```
 gulp build
 ```
-- This will push the project's theme files into the themes directory of the project's Wordpress install, launch a PHP server, and then open Wordpress in your browser.
+- This will push the project's theme files into the themes directory of the project's Wordpress install.
 
 ## 3. Launch the Project
 
@@ -130,11 +130,11 @@ Now that everything is place, we're ready to launch the project. Run this comman
 gulp
 ```
 
-- This command launches a 'watch' task, which automatically sets up a new server session for you and launches the project in your browser.
-- This task will also automatically update both the dev folder and the browser window whenever a change in the source files is detected.
+- This command launches a 'watch' task, which automatically launches a PHP server and then opens Wordpress in your browser.
+- The watch task will also automatically update both the project's dev folder and the browser window whenever a change in the source files is detected.
 
 **IMPORTANT** 
-- The first time you run 'gulp', you'll need to provide Wordpress with database connection details and set a project username and password. Once this has been completed, Wordpress will launch into the admin section. From here, simply activate the newly installed theme and you're good to go.
+- The first time you run 'gulp', you'll need to provide Wordpress with database connection details and set a project username and password. Once this has been completed, Wordpress will launch into the admin section. From there, simply activate the newly installed theme and you're good to go.
 
 
 ## 4. Package a Project
