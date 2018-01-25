@@ -23,7 +23,7 @@ Project Variables
  * 3) You're good to go!
  */
 // START EDITING
-var projectName			= "testBase2"; // REQD // Upper & lowercase letters & numbers only
+var projectName			= "WPBoot3"; // REQD // Upper & lowercase letters & numbers only
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -431,7 +431,8 @@ gulp.task('copy-config', ['unzip-wordpress'], function () {
  *
  */
 gulp.task('cleanup-install', ['unzip-wordpress'], function () {
-	return del([_environment.dev + 'latest.zip']);
+	return del([ _environment.dev + 'latest.zip'	]
+	);
 });
 
 /**
@@ -672,11 +673,16 @@ gulp.task('replace-package-name', ['update-style-banner'], function() {
 /**
  * @task: 'cleanup-template-files'
  *
- *	1. Removes the legacy '.github' folder from the template
- *
+ * 	1. Removes leftover and unwanted legacy files
  */
 gulp.task('cleanup-template-files', ['clone-repo'], function () {
-	return del([_environment.src + '.github']);
+	//return del([_environment.src + '.github']);
+	return del([
+		_environment.src + '.*',
+		_environment.src + '.*.*',
+		_environment.src + '.*.*.*'
+		]
+	);
 });
 
 //--------------------------------------------------------------------------------------------------
