@@ -11,10 +11,10 @@ Unlike most other build scripts, Zero2WP lets you work on multiple projects simu
 - Clone the latest version of Underscores
 - Optionally integrate Bootstrap3 w/Less
 - CSS: compile Sass/Less, lint errors, autoprefix, write sourcemaps, minify, and correct line-endings
-- JS: lint errors, order, concatenate, uglify &amp; correct line-endings</li>
+- JS: lint errors, order, concatenate, uglify, and correct line-endings
 - Compress PNG, JPEG, GIF & SVG images
 - Instantly update browsers on changes in project files
-- ... more in the works (i18n/l10n, custom templates, RTL, A11y, etc)
+- ... more in the works (a11y, i18n/l10n, RTL, custom templates, etc.)
 
 ## 1. Install Zero2WP
 
@@ -30,7 +30,7 @@ You'll also need to have **PHP** and **MySQL** installed, either globally or as 
 
 ### 1.2 Clone the Repo
 
-Open a terminal, go the folder from where you plan to serve your project files (i.e. 'public', or 'htdocs'), and clone the Zero2WP repo from GitHub with the following command:
+Open a terminal windoiw, go the folder from which you plan to serve your project files (i.e. 'public', or 'htdocs'), and clone the Zero2WP repo from GitHub with the following command:
 
 ```
 git clone https://github.com/arnoldNuvisto/Zero2WP
@@ -38,33 +38,60 @@ git clone https://github.com/arnoldNuvisto/Zero2WP
 
 - This will install Zero2WP into its own folder on your local machine. 
 
-### 1.3 Update The Config File
+### 1.3 Update the Config File
 
-While still in the terminal window, open the new **'Zero2WP'** folder, then open the **'config'** sub-folder. Now edit **'config.json'** to update the configuration details for your installation, then save the file.
+While still in the terminal window, open the new **'Zero2WP** folder, then open the **'/config'** sub-folder. Now edit **'app-config.json'** to update the configuration details for your installation of Zero2WP, then save the file.
 
-- FYI, the server variables in this file are passed to Browsersync - check out the Browsersync docs for more about these and other options.
+- FYI, the server variables in this file are passed to **Browsersync** - check out the Browsersync docs for more about these and other options.
+- Also, you can ignore **project-config.json** for now - more on this file later.
 
 ### 1.4 Install the Dependencies
 
-Now run the following command to install Zero2WP's dependencies:
+Next, go back to Zero2WP's root folder in the terminal window, and run the following command to install Zero2WP's dependencies:
 
 ```
 npm install
 ```
 
-- This will take a few minutes, so go grab a coffee - when you return, Zero2WP will be installed and ready to go!
+- This will take a few minutes, so go grab a coffee.
+
+### 1.5 Update the Nodejs Modules
+
+Once npm has finished installing Zero2WP, you'll want to update any **Nodejs** that may be outdated.
+
+First, make sure that you are in Zero2WP's root directory, then run this command to check if any updates are needed:
+
+```
+npm outdated
+```
+- This will list any Nodejs modules that need an update.
+
+If npm found modules that need to be updated, run the following command:  
+
+```
+npm update
+```
+- This will update all the otdated Nodejs modules listed earlier.
+
+Run the following command again to confirm the modules were updated:
+
+```
+npm outdated
+```
+
+That's it - ZeroWP is now installed and ready to use!
 
 ## 2. Start a Project
 
-Now that Zero2WP is up and running, the next step is to start a new project.
+Now that Zero2WP is ready to use, the next step is to start a new project.
 
 ### 2.1 Set the Project Details 
 
-In the terminal window, navigate to the root of the Zero2WP folder and open **'config/project-config.json'** for editing. Now add the project details using the following example as a guideline. Close and save the file.
+In the terminal window, from Zero2WP's root directory, navigate to the **'/config'** directory and open **'project-config.json'** for editing. Now add the project details using the following example as a guideline. Close and save the file.
 
 ```javascript
 {
-	"testRun"		: {
+	"testRun2"		: {
 		"URI" 			: false,
 		"license" 		: "GNU General Public License v2 or later",
 		"licenseURI" 	: "http://www.gnu.org/licenses/gpl-2.0.html",
@@ -89,11 +116,11 @@ var projectName			= "testRun"; // REQD // Upper & lowercase letters & numbers on
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 ```
-- This var, taken together with the details in the project config file, will tell Zero2WP everything it needs to know about your project so it can correctly name directories and files, customize the default theme, and more.
+- This var, taken together with the details in 'project-config.json', will tell Zero2WP everything it needs to know about your project so it can correctly name directories and files, customize the default theme, and more.
 
 ### 2.2 Install WordPress
 
-Next, install a fresh copy of wordpress into the project's dev directory. Still working in the terminal window, and still in the root of the **'Zero2WP'** folder, run the following command:
+Next, install a fresh copy of **Wordpress** into the project's dev directory. Still working in the terminal window, and still in Zero2WP's root folder, run the following command:
 
 ```
 gulp install-wordpress
@@ -130,7 +157,7 @@ Now that everything is place, we're ready to launch the new project. Run this co
 gulp
 ```
 
-- This command initiates a series of tasks to automatically launch a PHP server and then open Wordpress in your browser.
+- This command initiates a series of tasks to automatically launch a PHP server and then open the project's install of Wordpress in your browser.
 - This same task will also automatically update the project's dev folder as well as the browser window whenever a change in the source files is detected.
 
 **IMPORTANT** 
