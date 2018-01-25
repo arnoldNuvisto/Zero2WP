@@ -1,4 +1,12 @@
 {
+	"WPBoot3"		: {
+		"URI" 			: false,
+		"license" 		: "GNU General Public License v2 or later",
+		"licenseURI" 	: "http://www.gnu.org/licenses/gpl-2.0.html",
+		"description" 	: "A Bootstrap-based Wordpress theme starter template",
+		"version"		: "0.0.1",
+		"useBootstrap"	: true
+	},
 	"testBase"		: {
 		"URI" 			: false,
 		"license" 		: "GNU General Public License v2 or later",
