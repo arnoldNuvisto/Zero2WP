@@ -204,6 +204,7 @@ if (_appConfig.server.customPort !== null){
 
 var _style 			= {
 	src 	: _environment.src + (_useBootstrap ?  'bootstrap/less/' : 'sass/'),
+	srcLibs : _environment.src + 'css/',
 	dest 	: _environment.dev + _theme.dest + 'assets/css/'
 };
 if (_useBootstrap) {
@@ -226,7 +227,7 @@ var _styleBanner 	= [
 ];
 
 var _themeFiles 	= {
-	src 	: _environment.src + '**/*.{php,css,png}',
+	src 	: _environment.src + ['!css/*.css','**/*.{php,css,png}'],
 	dest 	: _environment.dev + _theme.dest 
 };
 
@@ -274,6 +275,7 @@ var _notices 			= {
 		load_languages	: 'Loaded language files to the dev folder for ' + _package.title,
 		load_plugins	: 'Loaded plugins to the dev folder for ' + _package.title,
 		load_styles		: 'Processed, compressed, and loaded CSS files to the dev folder for ' + _package.title,
+		load_style_libs	: 'Compressed and loaded vendor CSS files to the dev folder for ' + _package.title,
 		load_fonts		: 'Loaded font files to the dev folder for ' + _package.title,
 		load_images		: 'Compressed and loaded new images files to the dev folder for ' + _package.title,
 		process_head_js	: 'Processed, compressed, and loaded custom header JS files to the dev folder for ' + _package.title,
@@ -676,7 +678,6 @@ gulp.task('replace-package-name', ['update-style-banner'], function() {
  * 	1. Removes leftover and unwanted legacy files
  */
 gulp.task('cleanup-template-files', ['clone-repo'], function () {
-	//return del([_environment.src + '.github']);
 	return del([
 		_environment.src + '.*',
 		_environment.src + '.*.*',
@@ -825,6 +826,13 @@ gulp.task('compress-images', function() {
 /**
  * @task: 'load-styles'
  *
+ *  1. Runs 'load-theme-styles' and 'load-libs-styles' as sub-tasks
+ *
+ */
+gulp.task('load-styles', ['load-theme-styles', 'load-libs-styles']);
+/**
+ * @task: 'load-theme-styles'
+ *
  *	1. Compiles the project's SCSS files to CSS
  *	2. Adds browser prefixes as needed
  *	3. Creates and saves a sourcemap within the css file to assist with debugging
@@ -834,7 +842,7 @@ gulp.task('compress-images', function() {
  * 	7. Posts a notice to confirm that css processing is complete
  *
  */
-gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
+gulp.task('load-theme-styles', ['load-fonts', 'load-images'], function(){
 	return gulp.src(_style.src + (_useBootstrap ? _style.compileReqs : '{style.scss,rtl.scss}'))
 		.pipe(plumber({ errorHandler: onError }))
 		.pipe(sourcemaps.init())
@@ -848,6 +856,27 @@ gulp.task('load-styles', ['load-fonts', 'load-images'], function(){
 		.pipe(gulp.dest(_style.dest))
 		.pipe(browserSync.stream({ match: '**/*.css' }))
     	.pipe(notify({message: _notices.buildMsgs.load_styles, title: _product.name, onLast: true}));
+});
+
+/**
+ * @task: 'load-libs-styles'
+ *
+ * This task processes 'themes/<project-name>/css/**' + ' /*.css'. 
+ * 
+ * 	1. Check to see if there any new or updated vendor CSS files
+ * 	2. Concat all files into a single file
+ * 	3. Correct line endings for non-unix systems
+ *	4. Save the final file into the project's dev folder
+ *
+ */
+gulp.task('load-libs-styles', function() {
+	return gulp.src([_style.srcLibs + '**/*.css'])
+		.pipe(plumber({ errorHandler: onError }))
+	    .pipe(newer(_style.dest + _package.name + '-libs-style.css'))
+	    .pipe(concat(_package.name + '-libs-style.css'))
+	    .pipe(lineEndCorrect())
+	    .pipe(gulp.dest(_style.dest))
+    	.pipe(notify({message: _notices.buildMsgs.load_style_libs, title: _product.name, onLast: true}));
 });
 
 /**
@@ -872,6 +901,9 @@ gulp.task('load-custom-js', ['process-header-js', 'process-footer-js']);
  *	4. Correct line endings for non-unix systems
  *	5. Save the final file into the project's dev folder
  *
+ */
+/**
+ * @TODO: if(useBootstrap) do not include 'navigation.js'
  */
 gulp.task('process-header-js', function() {
 	return gulp.src([_js.src + '*.js'])
@@ -928,9 +960,6 @@ gulp.task('process-footer-js', function() {
  * 	5. Correct line endings for non-unix systems
  *	6. Save the final file into the project's dev folder
  *
- * Note:  newer() passes through all files if any one file in src
- * has been modified more recently than the concatenated dest file
- *
  */
 gulp.task('load-libs-js', function() {
 	return gulp.src([_js.src + 'libs/**/*.js'])
@@ -939,7 +968,7 @@ gulp.task('load-libs-js', function() {
         .pipe(gulpif(["*.js", "!*.min.js"],
             uglify()
         ))
-        .pipe(gulpif(["*.js", "!*.min.js"],
+        .pipe(gulpif(["*.js", "!*.min.js"], // is this needed?
             rename({suffix: ".min"})
 		))
 	    .pipe(concat(_package.name + '-libs.js'))
@@ -996,6 +1025,9 @@ gulp.task('insert-enqueues', ['load-assets'], function () {
  *	1. Initiate Browsersync
  *	2. Watch for file changes and run appropriate build tasks
  *
+ */
+/**
+ * @TODO: FIX: 'watch' does not see changes in './theme/<themename>/css/**'
  */
 gulp.task('watch', function(){ 
 	browserSync.init(_server);
