@@ -226,8 +226,11 @@ var _styleBanner 	= [
 	"*/\n"
 ];
 
+/**
+ * @TODO: figure out how to NOT copy over './css/**'
+ */
 var _themeFiles 	= {
-	src 	: _environment.src + ['!css/*.css','**/*.{php,css,png}'],
+	src 	: _environment.src + ['**/*.{php,css,png}'],
 	dest 	: _environment.dev + _theme.dest 
 };
 
@@ -1025,9 +1028,6 @@ gulp.task('insert-enqueues', ['load-assets'], function () {
  *	1. Initiate Browsersync
  *	2. Watch for file changes and run appropriate build tasks
  *
- */
-/**
- * @TODO: FIX: 'watch' does not see changes in './theme/<themename>/css/**'
  */
 gulp.task('watch', function(){ 
 	browserSync.init(_server);
