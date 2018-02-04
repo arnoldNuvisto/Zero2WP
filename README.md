@@ -1,4 +1,4 @@
-# Zero2WP v0.0.9
+# Zero2WP v0.0.10
 A build system for automating the WordPress development workflow.
 
 ## Introduction
@@ -8,13 +8,16 @@ Zero2WP is a robust build system for WordPress theme, plugin, and site developer
 Unlike most other build scripts, Zero2WP lets you work on multiple projects simultaneously from a single workbench. For each project, you can:
 
 - Install the latest version of WordPress
-- Clone the latest version of Underscores
+- Clone a recent version of '_s'
 - Optionally integrate Bootstrap3 w/Less
 - CSS: compile Sass/Less, lint errors, autoprefix, write sourcemaps, minify, and correct line-endings
 - JS: lint errors, order, concatenate, uglify, and correct line-endings
 - Compress PNG, JPEG, GIF & SVG images
 - Instantly update browsers on changes in project files
 - ... more in the works (a11y, i18n/l10n, RTL, custom templates, etc.)
+
+Note that Zero2WP uses a stable fork of '_s' that was last updated on Feb 4, 2018. 
+
 
 ## 1. Install Zero2WP
 

@@ -1,4 +1,12 @@
 {
+	"Andiron"		: {
+		"URI" 			: false,
+		"license" 		: "GNU General Public License v3 or later",
+		"licenseURI" 	: "http://www.gnu.org/licenses/gpl-3.0.html",
+		"description" 	: "A Bootstrap-based Wordpress theme for Andiron Steak & Sea",
+		"version"		: "0.0.1",
+		"useBootstrap"	: true
+	},
 	"WPBoot3"		: {
 		"URI" 			: false,
 		"license" 		: "GNU General Public License v2 or later",

@@ -10,7 +10,7 @@
  * @task "gulp"
  *
  * @author Arnold Wytenburg (@startupfreak)
- * @version 0.0.9
+ * @version 0.0.10
  */
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ Project Variables
  * 3) You're good to go!
  */
 // START EDITING
-var projectName			= "WPBoot3"; // REQD // Upper & lowercase letters & numbers only
+var projectName			= "Andiron"; // REQD // Upper & lowercase letters & numbers only
 // STOP EDITING
 //--------------------------------------------------------------------------------------------------
 /* -------------------------------------------------------------------------------------------------
@@ -92,9 +92,11 @@ var _bootstrap 		= {
 	srcURI 	: 'https://github.com/twbs/bootstrap/archive/',
 	srcFile	: ['v3.3.7.zip']
 };
-
+/**
+ * @NOTE: This loads up a version of '_s' that was forked on Feb 4, 2018
+ */
 var _template 		= {
-	src 	: 'https://github.com/Automattic/_s.git',
+	src 	: 'https://github.com/arnoldNuvisto/_s.git',
 	name 	: '_s'
 };
 
@@ -1029,6 +1031,9 @@ gulp.task('insert-enqueues', ['load-assets'], function () {
  *	2. Watch for file changes and run appropriate build tasks
  *
  */
+/**
+ * @TODO: 
+ */
 gulp.task('watch', function(){ 
 	browserSync.init(_server);
 
@@ -1131,6 +1136,9 @@ Plugins Tasks
  * run "gulp mytask" to use the default _s repo
  *
  * See: https://stackoverflow.com/questions/28538918/pass-parameter-to-gulp-task
+ *
+ * @FUTURE: Add purgecss into the task-stream
+ * See: https://www.purgecss.com/
  */
 /*
 	var repo, i = process.argv.indexOf("--repo"); // gets the index of the argument we're after
